@@ -1,0 +1,153 @@
+{
+  "Timestamp": 1778220484179,
+  "GameType": 0,
+  "GridOrientation": 0,
+  "XCells": 5,
+  "YCells": 5,
+  "Tiles": [
+    [
+      {
+        "TileType": 1
+      },
+      {
+        "TileType": 2,
+        "Stacks": [
+          0,
+          1,
+          5,
+          4,
+          2,
+          5
+        ]
+      },
+      {
+        "TileType": 5,
+        "UnlockLevel": 2,
+        "Stacks": [
+          5,
+          5,
+          2,
+          4,
+          3,
+          3,
+          0
+        ]
+      },
+      {
+        "TileType": 0
+      },
+      {
+        "TileType": 1
+      }
+    ],
+    [
+      {
+        "TileType": 0
+      },
+      {
+        "TileType": 2,
+        "Stacks": [
+          6,
+          5,
+          6,
+          0,
+          2
+        ]
+      },
+      {
+        "TileType": 2,
+        "Stacks": [
+          1,
+          5,
+          1,
+          6,
+          0
+        ]
+      },
+      {
+        "TileType": 0
+      },
+      {
+        "TileType": 1
+      }
+    ],
+    [
+      {
+        "TileType": 0
+      },
+      {
+        "TileType": 2,
+        "Stacks": [
+          6,
+          0,
+          3,
+          0,
+          5,
+          3
+        ]
+      },
+      {
+        "TileType": 0
+      },
+      {
+        "TileType": 0
+      },
+      {
+        "TileType": 0
+      }
+    ],
+    [
+      {
+        "TileType": 6,
+        "UnlockLevel": 115,
+        "Stacks": [
+          3,
+          4,
+          2,
+          0,
+          0,
+          6,
+          0
+        ]
+      },
+      {
+        "TileType": 0
+      },
+      {
+        "TileType": 6,
+        "UnlockLevel": 49,
+        "Stacks": [
+          5,
+          5,
+          5,
+          6,
+          1,
+          4
+        ]
+      },
+      {
+        "TileType": 0
+      },
+      {
+        "TileType": 1
+      }
+    ],
+    [
+      {
+        "TileType": 1
+      },
+      {
+        "TileType": 0
+      },
+      {
+        "TileType": 7
+      },
+      {
+        "TileType": 0
+      },
+      {
+        "TileType": 1
+      }
+    ]
+  ]
+}
