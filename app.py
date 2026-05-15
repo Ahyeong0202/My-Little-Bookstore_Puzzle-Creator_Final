@@ -141,6 +141,62 @@ div[data-testid="stTabs"] button {{ font-size: 14px; }}
 
 /* ── 구분선 */
 hr {{ border-color: {T["border"]}; }}
+
+/* ── 파일 업로더 전체 */
+[data-testid="stFileUploader"] {{
+    background: {T["bg3"]};
+    border-radius: 8px;
+}}
+[data-testid="stFileUploader"] * {{
+    color: {T["text"]} !important;
+}}
+[data-testid="stFileUploader"] label {{
+    color: {T["text"]} !important;
+    font-weight: 600;
+}}
+[data-testid="stFileUploader"] small,
+[data-testid="stFileUploader"] p,
+[data-testid="stFileUploader"] span {{
+    color: {T["text2"]} !important;
+}}
+[data-testid="stFileUploaderDropzone"] {{
+    background: {T["bg2"]} !important;
+    border: 1.5px dashed {T["border"]} !important;
+    border-radius: 6px;
+}}
+[data-testid="stFileUploaderDropzone"] * {{
+    color: {T["text"]} !important;
+}}
+
+/* ── 라디오 / 체크박스 / 토글 라벨 */
+[data-testid="stRadio"] label,
+[data-testid="stCheckbox"] label,
+[data-testid="stToggle"] label,
+.stRadio label, .stCheckbox label {{
+    color: {T["text"]} !important;
+}}
+
+/* ── selectbox 드롭다운 */
+[data-testid="stSelectbox"] label,
+[data-testid="stSelectbox"] span,
+[data-testid="stNumberInput"] label,
+[data-testid="stTextInput"] label,
+[data-testid="stTextArea"] label,
+[data-testid="stSlider"] label {{
+    color: {T["text"]} !important;
+}}
+
+/* ── 캡션 / 헬프 텍스트 */
+[data-testid="stCaptionContainer"] p,
+.stCaption {{
+    color: {T["text2"]} !important;
+}}
+
+/* ── 마크다운 텍스트 */
+.stMarkdown p, .stMarkdown li, .stMarkdown h1,
+.stMarkdown h2, .stMarkdown h3 {{
+    color: {T["text"]};
+}}
 </style>
 """, unsafe_allow_html=True)
 
