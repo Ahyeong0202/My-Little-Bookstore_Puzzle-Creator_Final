@@ -575,12 +575,20 @@ elif page == "📊 2. 난이도 분석":
     market = st.session_state.market_df
 
     # ── 시장 데이터 board_score 계산 (우리 H1 가중치 동일 적용)
+    # ── 현재 세션 가중치 사용 (4번 탭에서 조정한 값)
     W_H1_DEFAULT = {
         "H1_1":(8,True),"H1_2":(12,True),"H1_3":(10,True),"H1_4":(8,True),
         "H1_5":(10,False),"H1_6":(12,False),"H1_7":(12,False),
         "H1_8":(8,False),"H1_9":(8,False),"H1_10":(5,False),"H1_11":(5,False),
         "H1_12":(6,False),"H1_13":(4,True),"H1_14":(4,True),"H1_15":(4,True),
     }
+    # 4번 탭에서 조정한 가중치가 있으면 그걸 사용
+    saved_weights = st.session_state.get("h1_weights", {})
+    W_H1_CURRENT = {
+        k: (saved_weights.get(k, v[0]), v[1])
+        for k, v in W_H1_DEFAULT.items()
+    }
+
     MK_COL_MAP = {
         "H1_1":"H1-1","H1_2":"H1-2","H1_3":"H1-3 ",
         "H1_4":"H1-4","H1_5":"H1-5","H1_6":"H1-6 ",
@@ -590,28 +598,46 @@ elif page == "📊 2. 난이도 분석":
     }
 
     def calc_market_board(mk_df, w_h1, normalize=True):
+        """
+        normalize=True  → 각 H1 컬럼을 0~1 min-max 정규화 후 가중합 → 0~100
+        normalize=False → 각 H1 컬럼 원시값 그대로 가중합 → 0~100 재스케일
+        """
         df = mk_df.copy()
         tw = sum(v[0] for v in w_h1.values())
         score = pd.Series(0.0, index=df.index)
+
         for key, (w, inv) in w_h1.items():
             col = MK_COL_MAP.get(key)
             if col and col in df.columns:
                 v = pd.to_numeric(df[col], errors="coerce").fillna(0)
                 if normalize:
+                    # 0~1 정규화
                     rng = v.max() - v.min()
                     vn = (v - v.min()) / rng if rng > 0 else pd.Series(0.0, index=df.index)
                     score += (1 - vn if inv else vn) * w
                 else:
-                    score += (1 / (v + 1) if inv else v) * w
+                    # 원시값 그대로 (역수 방향은 max-v로 반영)
+                    mx = v.max()
+                    score += ((mx - v) if inv else v) * w
+
         if normalize:
+            # 가중합 → 0~100
             return (score / tw * 100).round(1)
-        mn, mx = score.min(), score.max()
-        return ((score - mn) / (mx - mn) * 100).round(1) if mx > mn else score
+        else:
+            # 원시값 기준 → 전체 범위로 재스케일해서 비교 가능하게
+            mn, mx = score.min(), score.max()
+            return ((score - mn) / (mx - mn) * 100).round(1) if mx > mn else score
 
     # ── 뷰 모드
     view_mode = st.radio("비교 기준",
         ["📐 원시값 기준", "📊 정규화 기준 (0~100)"], horizontal=True)
     use_norm = "정규화" in view_mode
+
+    # 현재 가중치 출처 표시
+    if saved_weights:
+        st.caption("⚙️ 4번 탭에서 조정한 가중치 적용 중")
+    else:
+        st.caption("⚙️ 기본 가중치 적용 중 (4번 탭 → 설정에서 변경 가능)")
 
     # ── 상단: board_score 비교 차트
     st.subheader("📈 board_score 비교 (동일 H1 가중치)")
@@ -630,7 +656,7 @@ elif page == "📊 2. 난이도 분석":
             mk.columns = [str(c).strip() for c in mk.columns]
             mk = mk[mk["Stage"].apply(lambda x: str(x).strip().lstrip("-").isdigit())].copy()
             mk["Stage"] = mk["Stage"].astype(int)
-            mk_board = calc_market_board(mk, W_H1_DEFAULT, normalize=use_norm)
+            mk_board = calc_market_board(mk, W_H1_CURRENT, normalize=use_norm)
             mk_sm    = mk_board.rolling(5, center=True, min_periods=1).mean()
             fig.add_trace(go.Scatter(x=mk["Stage"], y=mk_board.tolist(),
                 name="시장 board_score (원시)", mode="markers+lines",
@@ -709,8 +735,8 @@ elif page == "📊 2. 난이도 분석":
             mk2 = mk2[mk2["Stage"].apply(
                 lambda x: str(x).strip().lstrip("-").isdigit())].copy()
             mk2["Stage"] = mk2["Stage"].astype(int)
-            mk_raw  = calc_market_board(mk2, W_H1_DEFAULT, normalize=False)
-            mk_norm = calc_market_board(mk2, W_H1_DEFAULT, normalize=True)
+            mk_raw  = calc_market_board(mk2, W_H1_CURRENT, normalize=False)
+            mk_norm = calc_market_board(mk2, W_H1_CURRENT, normalize=True)
             our_bs  = intg["board_score"].iloc[:100]
             x_mk    = mk2["Stage"].tolist()
             x_our   = list(range(1, min(101, len(intg)+1)))
