@@ -7,57 +7,8 @@
   "Tiles": [
     [
       {
-        "TileType": 2,
-        "Stacks": [
-          1,
-          1
-        ]
-      },
-      {
         "TileType": 0
       },
-      {
-        "TileType": 0
-      },
-      {
-        "TileType": 0
-      }
-    ],
-    [
-      {
-        "TileType": 2,
-        "Stacks": [
-          2,
-          1,
-          2,
-          2
-        ]
-      },
-      {
-        "TileType": 0
-      },
-      {
-        "TileType": 0
-      },
-      {
-        "TileType": 0
-      }
-    ],
-    [
-      {
-        "TileType": 1
-      },
-      {
-        "TileType": 1
-      },
-      {
-        "TileType": 1
-      },
-      {
-        "TileType": 0
-      }
-    ],
-    [
       {
         "TileType": 0
       },
@@ -65,12 +16,9 @@
         "TileType": 2,
         "Stacks": [
           0,
-          0,
+          2,
           1
         ]
-      },
-      {
-        "TileType": 0
       },
       {
         "TileType": 1
@@ -78,7 +26,7 @@
     ],
     [
       {
-        "TileType": 1
+        "TileType": 0
       },
       {
         "TileType": 2,
@@ -88,6 +36,34 @@
         ]
       },
       {
+        "TileType": 1
+      },
+      {
+        "TileType": 0
+      }
+    ],
+    [
+      {
+        "TileType": 0
+      },
+      {
+        "TileType": 0
+      },
+      {
+        "TileType": 0
+      },
+      {
+        "TileType": 0
+      }
+    ],
+    [
+      {
+        "TileType": 0
+      },
+      {
+        "TileType": 1
+      },
+      {
         "TileType": 0
       },
       {
@@ -99,13 +75,33 @@
         "TileType": 1
       },
       {
-        "TileType": 0
-      },
-      {
-        "TileType": 0
-      },
-      {
         "TileType": 1
+      },
+      {
+        "TileType": 0
+      },
+      {
+        "TileType": 0
+      }
+    ],
+    [
+      {
+        "TileType": 2,
+        "Stacks": [
+          2,
+          1,
+          2,
+          0
+        ]
+      },
+      {
+        "TileType": 0
+      },
+      {
+        "TileType": 0
+      },
+      {
+        "TileType": 0
       }
     ]
   ]

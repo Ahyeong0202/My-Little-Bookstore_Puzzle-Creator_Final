@@ -3,42 +3,11 @@
   "GameType": 0,
   "GridOrientation": 0,
   "XCells": 4,
-  "YCells": 6,
+  "YCells": 5,
   "Tiles": [
     [
       {
-        "TileType": 1
-      },
-      {
         "TileType": 0
-      },
-      {
-        "TileType": 0
-      },
-      {
-        "TileType": 1
-      }
-    ],
-    [
-      {
-        "TileType": 0
-      },
-      {
-        "TileType": 1
-      },
-      {
-        "TileType": 0
-      },
-      {
-        "TileType": 0
-      }
-    ],
-    [
-      {
-        "TileType": 0
-      },
-      {
-        "TileType": 1
       },
       {
         "TileType": 2,
@@ -49,14 +18,14 @@
       },
       {
         "TileType": 0
+      },
+      {
+        "TileType": 0
       }
     ],
     [
       {
-        "TileType": 1
-      },
-      {
-        "TileType": 1
+        "TileType": 0
       },
       {
         "TileType": 0
@@ -64,31 +33,39 @@
       {
         "TileType": 2,
         "Stacks": [
-          0,
-          0,
-          1
-        ]
-      }
-    ],
-    [
-      {
-        "TileType": 2,
-        "Stacks": [
           1,
           0,
-          0,
-          1
-        ]
-      },
-      {
-        "TileType": 2,
-        "Stacks": [
           1,
           1
         ]
       },
       {
         "TileType": 0
+      }
+    ],
+    [
+      {
+        "TileType": 0
+      },
+      {
+        "TileType": 0
+      },
+      {
+        "TileType": 0
+      },
+      {
+        "TileType": 0
+      }
+    ],
+    [
+      {
+        "TileType": 0
+      },
+      {
+        "TileType": 1
+      },
+      {
+        "TileType": 0
       },
       {
         "TileType": 0
@@ -102,10 +79,14 @@
         "TileType": 0
       },
       {
-        "TileType": 1
+        "TileType": 0
       },
       {
-        "TileType": 0
+        "TileType": 2,
+        "Stacks": [
+          0,
+          1
+        ]
       }
     ]
   ]

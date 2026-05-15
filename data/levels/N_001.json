@@ -7,20 +7,15 @@
   "Tiles": [
     [
       {
+        "TileType": 0
+      },
+      {
         "TileType": 2,
         "Stacks": [
           1,
           0,
           0,
           1
-        ]
-      },
-      {
-        "TileType": 2,
-        "Stacks": [
-          0,
-          1,
-          0
         ]
       },
       {
@@ -68,10 +63,9 @@
       {
         "TileType": 2,
         "Stacks": [
-          1,
-          1,
           0,
-          1
+          1,
+          0
         ]
       },
       {

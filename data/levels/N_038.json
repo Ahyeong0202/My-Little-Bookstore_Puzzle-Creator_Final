@@ -13,55 +13,31 @@
         "TileType": 0
       },
       {
+        "TileType": 0
+      },
+      {
+        "TileType": 1
+      },
+      {
+        "TileType": 0
+      }
+    ],
+    [
+      {
+        "TileType": 0
+      },
+      {
+        "TileType": 0
+      },
+      {
+        "TileType": 0
+      },
+      {
+        "TileType": 0
+      },
+      {
         "TileType": 3,
-        "Level": 133
-      },
-      {
-        "TileType": 3,
-        "Level": 118
-      },
-      {
-        "TileType": 1
-      }
-    ],
-    [
-      {
-        "TileType": 0
-      },
-      {
-        "TileType": 1
-      },
-      {
-        "TileType": 0
-      },
-      {
-        "TileType": 1
-      },
-      {
-        "TileType": 0
-      }
-    ],
-    [
-      {
-        "TileType": 2,
-        "Stacks": [
-          4,
-          4,
-          0,
-          2
-        ]
-      },
-      {
-        "TileType": 0
-      },
-      {
-        "TileType": 1
-      },
-      {
-        "TileType": 0
-      },
-      {
-        "TileType": 0
+        "Level": 154
       }
     ],
     [
@@ -75,50 +51,64 @@
         "TileType": 0
       },
       {
-        "TileType": 2,
-        "Stacks": [
-          3,
-          4,
-          4,
-          3
-        ]
-      },
-      {
-        "TileType": 0
-      }
-    ],
-    [
-      {
         "TileType": 0
       },
       {
         "TileType": 2,
         "Stacks": [
+          1,
           4,
-          3,
-          2
-        ]
-      },
-      {
-        "TileType": 2,
-        "Stacks": [
-          0,
           2,
+          1
+        ]
+      }
+    ],
+    [
+      {
+        "TileType": 2,
+        "Stacks": [
+          2,
+          4,
+          4,
+          0,
+          4
+        ]
+      },
+      {
+        "TileType": 0
+      },
+      {
+        "TileType": 0
+      },
+      {
+        "TileType": 2,
+        "Stacks": [
+          1,
+          4,
+          4,
+          1,
           1
         ]
       },
       {
-        "TileType": 2,
-        "Stacks": [
-          3,
-          2,
-          1,
-          0,
-          2
-        ]
+        "TileType": 0
+      }
+    ],
+    [
+      {
+        "TileType": 0
+      },
+      {
+        "TileType": 1
       },
       {
         "TileType": 0
+      },
+      {
+        "TileType": 1
+      },
+      {
+        "TileType": 1
       }
     ]
   ]

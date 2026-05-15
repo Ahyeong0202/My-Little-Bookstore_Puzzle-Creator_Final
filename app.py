@@ -755,16 +755,19 @@ elif page == "📊 2. 난이도 분석":
 elif page == "🗺️ 3. 판 모양 뷰어":
     st.title("🗺️ 판 모양 뷰어 / JSON 생성기")
 
-    view_tab, edit_tab = st.tabs(["🔍 레벨 뷰어", "✏️ 새 판 편집"])
+    view_tab, edit_tab = st.tabs(["🔍 레벨 뷰어 & 편집", "✏️ 새 판 만들기"])
 
-    # ── 뷰어
+    # ── 뷰어 & 인라인 편집
     with view_tab:
-        col1, col2 = st.columns([1,3])
-        with col1:
+        # ── 소스 선택
+        vc1, vc2 = st.columns([1,3])
+        with vc1:
             src = st.radio("소스", ["레벨 번호","JSON 업로드"], horizontal=True)
             data = None
-            if src=="레벨 번호":
+            fname_default = "N_001.json"
+            if src == "레벨 번호":
                 lv = st.number_input("레벨", 1, 500, 1)
+                fname_default = f"N_{int(lv):03d}.json"
                 data = load_level_local(int(lv))
                 if data is None:
                     st.warning(f"N_{lv:03d}.json 없음 — JSON 업로드 사용")
@@ -772,9 +775,18 @@ elif page == "🗺️ 3. 판 모양 뷰어":
                 uj = st.file_uploader("JSON 파일", type=["json"], key="uj_view")
                 if uj:
                     data = json.load(uj)
+                    fname_default = uj.name
                     st.success(f"✅ {uj.name}")
 
+            # 편집 모드 토글
+            edit_mode = st.toggle("✏️ 편집 모드", value=False, key="view_edit_mode")
+
             if data:
+                # 뷰어용 데이터를 session_state에 로드 (편집 모드 진입 시)
+                data_key = f"view_tiles_{fname_default}"
+                if data_key not in st.session_state or not edit_mode:
+                    st.session_state[data_key] = json.loads(json.dumps(data))  # 깊은 복사
+
                 h1 = analyze_level(data)
                 st.markdown(f"**보드**: {data['XCells']}×{data['YCells']}")
                 with st.expander("타일 구성"):
@@ -784,54 +796,131 @@ elif page == "🗺️ 3. 판 모양 뷰어":
                 with st.expander("H1 지표"):
                     for k in ['H1_1','H1_2','H1_3','H1_5','H1_6','H1_7','H1_9','H1_12','H1_14']:
                         st.markdown(f"**{k}**: {h1[k]}")
-                # 단일 레벨 H1 다운로드
                 h1e = {k:v for k,v in h1.items() if k!='tile_counts'}
                 h1df = pd.DataFrame([h1e])
-                st.download_button("📥 H1 CSV",df_to_csv_bytes(h1df),"h1_metrics.csv","text/csv",use_container_width=True)
+                st.download_button("📥 H1 CSV", df_to_csv_bytes(h1df),
+                                   "h1_metrics.csv", "text/csv", use_container_width=True)
 
-            show_coord = st.checkbox("좌표 표시",False)
-            show_chips = st.checkbox("칩 색상 표시",True)
-            hex_size   = st.slider("헥사 크기",20,60,38)
+            show_coord = st.checkbox("좌표 표시", False)
+            show_chips = st.checkbox("칩 색상 표시", True)
+            hex_size   = st.slider("헥사 크기", 20, 60, 38)
 
-        with col2:
-            if data:
-                Y,X=data['YCells'],data['XCells']
-                tiles=data['Tiles']
-                fig=go.Figure()
+        with vc2:
+            if data is None:
+                st.info("왼쪽에서 레벨을 선택하거나 JSON을 업로드해주세요.")
+            else:
+                work_data = st.session_state.get(f"view_tiles_{fname_default}", data)
+                Y = work_data['YCells']; X = work_data['XCells']
+                tiles = work_data['Tiles']
+
+                # ── 편집 모드: 셀 선택 패널
+                if edit_mode:
+                    ep1, ep2 = st.columns(2)
+                    e_sel_y = ep1.number_input("행(Y)", 0, Y-1, 0, key="ve_sel_y")
+                    e_sel_x = ep2.number_input("열(X)", 0, X-1, 0, key="ve_sel_x")
+                    cur = tiles[e_sel_y][e_sel_x]
+                    cur_type = TILETYPE.get(cur.get('TileType',0), 'Normal')
+
+                    ep3, ep4 = st.columns(2)
+                    new_type = ep3.selectbox("TileType", list(TILETYPE.values()),
+                                             index=list(TILETYPE.values()).index(cur_type),
+                                             key="ve_type")
+                    new_stacks, lv_val, ul_val = [], 0, 0
+                    if new_type in ('Stack','StackLock','Ice'):
+                        st.markdown(
+                            "".join([f'<span style="background:{CHIP_HEX[i]};color:{"#333" if i in(1,6) else "white"};border-radius:3px;padding:1px 5px;margin:1px;font-size:10px;">{i}={COLOR_MAP[i][:3]}</span>' for i in range(8)]),
+                            unsafe_allow_html=True)
+                        si = ep4.text_input("칩 (콤마구분)",
+                                            ",".join(map(str, cur.get('Stacks',[]))), key="ve_stacks")
+                        try: new_stacks=[int(s) for s in si.split(',') if s.strip().isdigit()]
+                        except: new_stacks=[]
+                    if new_type in ('Lock','Plank'):
+                        lv_val = ep4.number_input("Level", 0, 9999, cur.get('Level',0), key="ve_lv")
+                    if new_type in ('StackLock','Ice'):
+                        ul_val = ep4.number_input("UnlockLevel", 0, 9999, cur.get('UnlockLevel',0), key="ve_ul")
+
+                    if st.button("✅ 셀 적용", key="ve_apply"):
+                        new_cell = {'TileType': TILE_REV[new_type]}
+                        if new_type in ('Stack','StackLock','Ice'): new_cell['Stacks'] = new_stacks
+                        if new_type in ('Lock','Plank'): new_cell['Level'] = lv_val
+                        if new_type in ('StackLock','Ice'): new_cell['UnlockLevel'] = ul_val
+                        st.session_state[f"view_tiles_{fname_default}"]['Tiles'][e_sel_y][e_sel_x] = new_cell
+                        st.rerun()
+
+                # ── 그리드 렌더링
+                fig = go.Figure()
                 for y in range(Y):
                     for x in range(X):
-                        tile=tiles[y][x]; tt=tile.get('TileType',0)
-                        name=TILETYPE.get(tt,'Normal')
-                        cx,cy=hex_to_pixel(y,x,hex_size)
-                        hx,hy=make_hex_path(cx,cy,hex_size*0.92)
-                        if name=='Blank':
-                            # 자리만 유지, 투명하게 렌더링
+                        tile = tiles[y][x]; tt = tile.get('TileType',0)
+                        name = TILETYPE.get(tt,'Normal')
+                        cx, cy = hex_to_pixel(y, x, hex_size)
+                        hx, hy = make_hex_path(cx, cy, hex_size*0.92)
+
+                        is_sel = edit_mode and (y==e_sel_y and x==e_sel_x) if edit_mode else False
+
+                        if name == 'Blank' and not is_sel:
                             fig.add_trace(go.Scatter(x=hx,y=hy,fill='toself',
                                 fillcolor='rgba(0,0,0,0)',
                                 line=dict(color='rgba(0,0,0,0)',width=0),
                                 mode='lines',hoverinfo='skip',showlegend=False))
                             continue
+
+                        border_c = '#FFD700' if is_sel else 'white'
+                        border_w = 3 if is_sel else 1.5
+                        fill_c   = HEX_COLORS.get(name,'#CCC') if name!='Blank' else 'rgba(80,80,80,0.3)'
+
                         fig.add_trace(go.Scatter(x=hx,y=hy,fill='toself',
-                            fillcolor=HEX_COLORS.get(name,'#CCC'),
-                            line=dict(color='white',width=1.5),
+                            fillcolor=fill_c,
+                            line=dict(color=border_c,width=border_w),
                             mode='lines',hoverinfo='skip',showlegend=False))
-                        label=name[:2]
+
+                        label = name[:2]
                         if name in ('Stack','StackLock','Ice') and 'Stacks' in tile:
-                            stacks=tile['Stacks']
-                            label='+'.join(COLOR_MAP.get(c,'?')[0] for c in stacks[:4]) if show_chips and stacks else f"S{len(stacks)}"
+                            stacks = tile['Stacks']
+                            label = '+'.join(COLOR_MAP.get(c,'?')[0] for c in stacks[:4]) if show_chips and stacks else f"S{len(stacks)}"
                         elif name in ('Lock','Plank') and 'Level' in tile:
-                            label=f"L{tile['Level']}"
-                        elif name=='StackLock' and 'UnlockLevel' in tile:
-                            label=f"SL{tile['UnlockLevel']}"
-                        if show_coord: label=f"({y},{x})\n{label}"
+                            label = f"L{tile['Level']}"
+                        elif name == 'StackLock' and 'UnlockLevel' in tile:
+                            label = f"SL{tile['UnlockLevel']}"
+                        if show_coord or edit_mode:
+                            label = f"({y},{x})\n{label}"
+
                         fig.add_annotation(x=cx,y=cy,text=label,showarrow=False,
                             font=dict(size=9,color='white' if tt!=0 else '#333'),align='center')
+
                 fig.update_layout(height=600,margin=dict(l=10,r=10,t=10,b=10),
-                    xaxis=dict(visible=False,scaleanchor='y'),yaxis=dict(visible=False),
+                    xaxis=dict(visible=False,scaleanchor='y'),
+                    yaxis=dict(visible=False),
                     plot_bgcolor=T["grid_bg"],paper_bgcolor=T["grid_bg"],showlegend=False)
-                st.plotly_chart(fig,use_container_width=True)
-            else:
-                st.info("왼쪽에서 레벨을 선택하거나 JSON을 업로드해주세요.")
+                st.plotly_chart(fig, use_container_width=True)
+
+                # ── 저장 버튼 (편집 모드일 때만)
+                if edit_mode:
+                    st.markdown("---")
+                    save_fname = st.text_input("저장 파일명", fname_default, key="ve_fname")
+                    json_out = json.dumps(work_data, ensure_ascii=False, indent=2).encode("utf-8")
+
+                    sc1, sc2 = st.columns(2)
+                    sc1.download_button("📥 JSON 다운로드", json_out,
+                                        save_fname, "application/json", use_container_width=True)
+
+                    if sc2.button("☁️ GitHub에 저장", use_container_width=True, key="ve_github"):
+                        token = st.session_state.github_token
+                        if not token:
+                            st.error("사이드바 → 🔑 GitHub 설정에서 토큰을 입력해주세요.")
+                        else:
+                            gh_path = f"data/levels/{save_fname}"
+                            with st.spinner(f"GitHub에 저장 중... ({gh_path})"):
+                                ok, resp = github_commit(
+                                    token, GITHUB_REPO, gh_path, json_out,
+                                    f"update level: {save_fname}"
+                                )
+                            if ok:
+                                st.success(f"✅ GitHub 저장 완료! `{gh_path}`")
+                                # 캐시 초기화
+                                load_level_local.clear()
+                            else:
+                                st.error(f"❌ 실패: {resp.get('message','')}")
 
     # ── 편집기
     with edit_tab:

@@ -2,26 +2,47 @@
   "Timestamp": 1778220483831,
   "GameType": 0,
   "GridOrientation": 0,
-  "XCells": 4,
-  "YCells": 6,
+  "XCells": 5,
+  "YCells": 4,
   "Tiles": [
     [
+      {
+        "TileType": 0
+      },
+      {
+        "TileType": 0
+      },
       {
         "TileType": 2,
         "Stacks": [
           2,
-          1,
-          0
+          2,
+          3,
+          1
         ]
       },
       {
-        "TileType": 6,
+        "TileType": 0
+      },
+      {
+        "TileType": 0
+      }
+    ],
+    [
+      {
+        "TileType": 2,
         "Stacks": [
+          1,
           3,
-          4,
           2
-        ],
-        "UnlockLevel": 773
+        ]
+      },
+      {
+        "TileType": 3,
+        "Level": 371
+      },
+      {
+        "TileType": 0
       },
       {
         "TileType": 0
@@ -30,25 +51,21 @@
         "TileType": 2,
         "Stacks": [
           3,
-          3,
           0,
-          4
+          2,
+          2
         ]
       }
     ],
     [
       {
-        "TileType": 2,
-        "Stacks": [
-          4,
-          1,
-          2,
-          0,
-          2
-        ]
+        "TileType": 0
       },
       {
-        "TileType": 1
+        "TileType": 8
+      },
+      {
+        "TileType": 0
       },
       {
         "TileType": 0
@@ -68,62 +85,15 @@
         "TileType": 0
       },
       {
-        "TileType": 1
-      }
-    ],
-    [
-      {
         "TileType": 0
       },
-      {
-        "TileType": 3,
-        "Level": 196
-      },
-      {
-        "TileType": 0
-      },
-      {
-        "TileType": 3,
-        "Level": 417
-      }
-    ],
-    [
       {
         "TileType": 2,
         "Stacks": [
-          1,
+          3,
           4,
-          2
+          4
         ]
-      },
-      {
-        "TileType": 0
-      },
-      {
-        "TileType": 0
-      },
-      {
-        "TileType": 1
-      }
-    ],
-    [
-      {
-        "TileType": 2,
-        "Stacks": [
-          4,
-          0,
-          2,
-          3
-        ]
-      },
-      {
-        "TileType": 1
-      },
-      {
-        "TileType": 0
-      },
-      {
-        "TileType": 0
       }
     ]
   ]

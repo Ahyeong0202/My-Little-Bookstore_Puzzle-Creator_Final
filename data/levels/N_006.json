@@ -2,8 +2,8 @@
   "Timestamp": 1778220483785,
   "GameType": 0,
   "GridOrientation": 0,
-  "XCells": 6,
-  "YCells": 4,
+  "XCells": 4,
+  "YCells": 5,
   "Tiles": [
     [
       {
@@ -16,24 +16,11 @@
         "TileType": 0
       },
       {
-        "TileType": 1
-      },
-      {
         "TileType": 0
-      },
-      {
-        "TileType": 1
       }
     ],
     [
       {
-        "TileType": 2,
-        "Stacks": [
-          2,
-          2
-        ]
-      },
-      {
         "TileType": 0
       },
       {
@@ -42,13 +29,9 @@
       {
         "TileType": 2,
         "Stacks": [
-          1,
-          1,
-          0
+          0,
+          1
         ]
-      },
-      {
-        "TileType": 0
       },
       {
         "TileType": 0
@@ -59,15 +42,9 @@
         "TileType": 1
       },
       {
-        "TileType": 0
-      },
-      {
-        "TileType": 0
-      },
-      {
         "TileType": 2,
         "Stacks": [
-          1,
+          0,
           2
         ]
       },
@@ -80,10 +57,13 @@
     ],
     [
       {
-        "TileType": 0
-      },
-      {
-        "TileType": 0
+        "TileType": 2,
+        "Stacks": [
+          2,
+          0,
+          2,
+          1
+        ]
       },
       {
         "TileType": 1
@@ -92,13 +72,18 @@
         "TileType": 0
       },
       {
-        "TileType": 2,
-        "Stacks": [
-          0,
-          0,
-          2,
-          0
-        ]
+        "TileType": 0
+      }
+    ],
+    [
+      {
+        "TileType": 0
+      },
+      {
+        "TileType": 0
+      },
+      {
+        "TileType": 0
       },
       {
         "TileType": 0

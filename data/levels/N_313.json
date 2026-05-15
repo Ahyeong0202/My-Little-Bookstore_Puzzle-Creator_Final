@@ -2,203 +2,126 @@
   "Timestamp": 1778220484092,
   "GameType": 0,
   "GridOrientation": 0,
-  "XCells": 5,
-  "YCells": 5,
+  "XCells": 4,
+  "YCells": 6,
   "Tiles": [
     [
       {
-        "TileType": 5,
-        "Stacks": [
-          5,
-          5
-        ],
-        "UnlockLevel": 62
+        "TileType": 0
       },
       {
-        "TileType": 6,
+        "TileType": 0
+      },
+      {
+        "TileType": 0
+      },
+      {
+        "TileType": 3,
+        "Level": 2831
+      }
+    ],
+    [
+      {
+        "TileType": 0
+      },
+      {
+        "TileType": 2,
         "Stacks": [
+          2,
+          6,
           3,
-          0,
-          6,
           4,
-          6,
-          6,
           5,
+          2
+        ]
+      },
+      {
+        "TileType": 0
+      },
+      {
+        "TileType": 0
+      }
+    ],
+    [
+      {
+        "TileType": 0
+      },
+      {
+        "TileType": 0
+      },
+      {
+        "TileType": 0
+      },
+      {
+        "TileType": 0
+      }
+    ],
+    [
+      {
+        "TileType": 0
+      },
+      {
+        "TileType": 5,
+        "Stacks": [
           3
         ],
-        "UnlockLevel": 2057
+        "UnlockLevel": 94
+      },
+      {
+        "TileType": 0
       },
       {
         "TileType": 2,
         "Stacks": [
-          0,
           3,
           2,
-          5,
+          6,
           4,
-          3,
-          2,
-          6
-        ]
-      },
-      {
-        "TileType": 5,
-        "Stacks": [
-          3,
-          6
-        ],
-        "UnlockLevel": 59
-      },
-      {
-        "TileType": 8
-      }
-    ],
-    [
-      {
-        "TileType": 4,
-        "Level": 27
-      },
-      {
-        "TileType": 1
-      },
-      {
-        "TileType": 2,
-        "Stacks": [
-          0,
-          4,
-          4,
-          5,
-          5,
-          3,
           4
         ]
-      },
-      {
-        "TileType": 3,
-        "Level": 1899
-      },
-      {
-        "TileType": 1
       }
     ],
     [
-      {
-        "TileType": 5,
-        "Stacks": [
-          2
-        ],
-        "UnlockLevel": 100
-      },
-      {
-        "TileType": 3,
-        "Level": 2028
-      },
-      {
-        "TileType": 3,
-        "Level": 1004
-      },
-      {
-        "TileType": 6,
-        "Stacks": [
-          4,
-          5,
-          2,
-          1,
-          1
-        ],
-        "UnlockLevel": 2718
-      },
-      {
-        "TileType": 3,
-        "Level": 1505
-      }
-    ],
-    [
-      {
-        "TileType": 6,
-        "Stacks": [
-          5,
-          5,
-          2,
-          1,
-          6,
-          3,
-          4,
-          1
-        ],
-        "UnlockLevel": 4409
-      },
       {
         "TileType": 2,
         "Stacks": [
-          1,
-          6,
-          0,
-          4,
+          2,
+          2,
+          2,
           0,
           6
         ]
       },
       {
-        "TileType": 2,
-        "Stacks": [
-          1,
-          4,
-          5,
-          0,
-          3,
-          0,
-          2
-        ]
-      },
-      {
         "TileType": 1
       },
       {
         "TileType": 2,
         "Stacks": [
-          3,
           5,
-          1,
-          3,
-          0,
+          5,
+          4,
           6,
+          3,
           0
         ]
+      },
+      {
+        "TileType": 0
       }
     ],
     [
       {
-        "TileType": 2,
-        "Stacks": [
-          3,
-          6,
-          5,
-          4,
-          0,
-          0,
-          2
-        ]
-      },
-      {
-        "TileType": 4,
-        "Level": 3
-      },
-      {
-        "TileType": 2,
-        "Stacks": [
-          0,
-          0,
-          3,
-          5,
-          6
-        ]
-      },
-      {
-        "TileType": 8
-      },
-      {
         "TileType": 1
+      },
+      {
+        "TileType": 0
+      },
+      {
+        "TileType": 0
+      },
+      {
+        "TileType": 0
       }
     ]
   ]
