@@ -70,7 +70,7 @@ T = {
     "bg":        "#0d1117" if DK else "#ffffff",
     "bg2":       "#161b22" if DK else "#f6f8fa",
     "bg3":       "#21262d" if DK else "#eaeef2",
-    "border":    "#30363d" if DK else "#d0d7de",
+    "border":    "#30363d" if DK else "#8c959f",
     "text":      "#e6edf3" if DK else "#1f2328",
     "text2":     "#7d8590" if DK else "#656d76",
     "accent":    "#58a6ff" if DK else "#0969da",
@@ -137,27 +137,6 @@ div[data-testid="stTabs"] button {{ font-size: 14px; }}
 [data-testid="stExpander"] {{
     background: {T["bg2"]}; border: 1px solid {T["border"]} !important;
     border-radius: 6px;
-}}
-
-/* ── 다운로드 버튼 */
-[data-testid="stDownloadButton"] button {{
-    background: {T["bg3"]} !important;
-    color: {T["text"]} !important;
-    border: 1px solid {T["border"]} !important;
-}}
-[data-testid="stDownloadButton"] button:hover {{
-    background: {T["bg2"]} !important;
-    border-color: {T["accent"]} !important;
-}}
-
-/* ── 일반 버튼 */
-[data-testid="stButton"] button {{
-    background: {T["bg3"]} !important;
-    color: {T["text"]} !important;
-    border: 1px solid {T["border"]} !important;
-}}
-[data-testid="stButton"] button:hover {{
-    border-color: {T["accent"]} !important;
 }}
 
 /* ── 구분선 */
@@ -231,15 +210,15 @@ def df_to_json_bytes(df):
     return json.dumps(df.to_dict(orient='records'), ensure_ascii=False, indent=2).encode("utf-8")
 
 def hex_to_pixel(row, col, size=40):
-    # odd-r: 홀수 행은 오른쪽으로 0.5 offset (유니티와 동일)
+    # pointy-top + odd-r: 홀수 행 오른쪽 offset (유니티 동일)
     x = size * math.sqrt(3) * (col + 0.5 * (row % 2))
-    y = -size * 1.5 * row   # y 반전: row 0이 위, 아래로 갈수록 증가
+    y = -size * 1.5 * row  # row 0이 위, 아래로 증가
     return x, y
 
 def make_hex_path(cx, cy, size=38):
-    # flat-top 헥사 (유니티 기본)
-    pts = [(cx + size*math.cos(math.pi/180*(60*i)),
-            cy + size*math.sin(math.pi/180*(60*i))) for i in range(6)]
+    # pointy-top 헥사 (꼭짓점이 위아래)
+    pts = [(cx + size * math.cos(math.pi / 180 * (60 * i - 30)),
+            cy + size * math.sin(math.pi / 180 * (60 * i - 30))) for i in range(6)]
     pts.append(pts[0])
     return [p[0] for p in pts], [p[1] for p in pts]
 
