@@ -323,8 +323,9 @@ with st.sidebar:
         "📖 1. 매뉴얼",
         "📊 2. 난이도 분석",
         "🗺️ 3. 판 모양 뷰어",
-        "🔧 4. 설정",
-        "🗄️ 5. 아카이브",
+        "🎲 4. JSON 생성기",
+        "🔧 5. 설정",
+        "🗄️ 6. 아카이브",
     ], label_visibility="collapsed")
 
     st.markdown("---")
@@ -467,7 +468,8 @@ board_score × 50% + gameplay_score × 50%
         ("📖 1. 매뉴얼", "지금 보고 계신 페이지입니다. 앱 사용법과 용어를 안내합니다."),
         ("📊 2. 난이도 분석", "시장 데이터 실측값과 우리 게임 통합 난이도를 한 차트에서 비교하고, 판 모양/게임 진행 가중치 비율을 조정합니다."),
         ("🗺️ 3. 판 모양 뷰어", "레벨 JSON 파일을 시각화하고, 새 판을 직접 편집해 JSON으로 저장합니다."),
-        ("🔧 4. 설정", "H1 지표별 세부 가중치(%) 조정 및 tblStage 스택 파라미터를 직접 수정합니다."),
+        ("🎲 4. JSON 생성기", "난이도 곡선을 확인하고 레벨 범위를 입력해 JSON 파일을 생성하고 zip으로 다운로드합니다."),
+        ("🔧 5. 설정", "H1 지표별 세부 가중치(%) 조정 및 tblStage 스택 파라미터를 직접 수정합니다."),
         ("🗄️ 5. 아카이브", "설정값을 버전으로 저장하고 GitHub에 자동 커밋합니다. 버전 비교도 가능합니다."),
     ]
     for i, (name, desc) in enumerate(tabs_info):
@@ -1249,8 +1251,97 @@ elif page == "🗺️ 3. 판 모양 뷰어":
 
 # ══════════════════════════════════════════════════════
 # 탭 4 — 설정
+
 # ══════════════════════════════════════════════════════
-elif page == "🔧 4. 설정":
+# 탭 4 — JSON 생성기
+# ══════════════════════════════════════════════════════
+elif page == "🎲 4. JSON 생성기":
+    st.title("🎲 JSON 생성기")
+    st.caption("난이도 곡선 기반으로 레벨 범위를 선택해 JSON 파일을 생성하고 다운로드합니다.")
+
+    from generate_levels import generate_range_zip, difficulty as calc_diff
+
+    tbl = st.session_state.tbl_df
+
+    if tbl is None:
+        st.warning("사이드바에서 tblStage_500.xlsx를 업로드해주세요.")
+    else:
+        # ── 난이도 곡선 미리보기
+        st.subheader("📈 난이도 곡선")
+        lv_range = st.slider("생성할 레벨 범위", 1, 500, (1, 50), key="gen_range")
+        start_lv, end_lv = lv_range
+        total_lv = end_lv - start_lv + 1
+
+        # 선택 구간 난이도 계산
+        all_lvs   = list(range(1, 501))
+        all_diffs = [calc_diff(n) for n in all_lvs]
+
+        fig_gen = go.Figure()
+        # 전체 곡선 (연하게)
+        fig_gen.add_trace(go.Scatter(
+            x=all_lvs, y=all_diffs,
+            mode='lines', name='전체 곡선',
+            line=dict(color='#444', width=1), opacity=0.4
+        ))
+        # 선택 구간 강조
+        sel_lvs   = list(range(start_lv, end_lv + 1))
+        sel_diffs = all_diffs[start_lv-1:end_lv]
+        fig_gen.add_trace(go.Scatter(
+            x=sel_lvs, y=sel_diffs,
+            mode='lines+markers', name=f'선택 구간 (Lv {start_lv}~{end_lv})',
+            line=dict(color='#3fb950', width=2.5),
+            marker=dict(size=4, color='#3fb950')
+        ))
+        fig_gen.update_layout(
+            height=320,
+            plot_bgcolor=T["plot_bg"], paper_bgcolor=T["plot_bg"],
+            font_color=T["text"],
+            xaxis=dict(title="레벨", gridcolor=T["grid_line"]),
+            yaxis=dict(title="난이도", range=[0,105], gridcolor=T["grid_line"]),
+            legend=dict(orientation="h", y=1.1, bgcolor="rgba(0,0,0,0)"),
+            margin=dict(l=10,r=10,t=30,b=10)
+        )
+        st.plotly_chart(fig_gen, use_container_width=True)
+
+        # ── 선택 구간 요약
+        sel_arr = sel_diffs
+        c1, c2, c3, c4 = st.columns(4)
+        c1.metric("생성할 레벨 수", f"{total_lv}개")
+        c2.metric("평균 난이도", f"{sum(sel_arr)/len(sel_arr):.1f}")
+        c3.metric("최저", f"{min(sel_arr):.1f} (Lv{start_lv + sel_arr.index(min(sel_arr))})")
+        c4.metric("최고", f"{max(sel_arr):.1f} (Lv{start_lv + sel_arr.index(max(sel_arr))})")
+
+        st.markdown("---")
+
+        # ── 생성 버튼
+        if st.button(f"🚀 Lv {start_lv}~{end_lv} JSON 생성 ({total_lv}개)", type="primary", use_container_width=True):
+
+            progress_bar = st.progress(0)
+            status_text  = st.empty()
+
+            def on_progress(done, total):
+                lv_now = start_lv + done - 1
+                progress_bar.progress(done / total)
+                status_text.markdown(f"⚙️ 생성 중: **Lv {lv_now}** ({done}/{total})")
+
+            df_n = tbl[tbl['LevelName'].str.startswith('N ', na=False)].reset_index(drop=True)
+
+            zip_bytes = generate_range_zip(start_lv, end_lv, df_n, callback=on_progress)
+
+            progress_bar.progress(1.0)
+            status_text.markdown(f"✅ **{total_lv}개 생성 완료!**")
+
+            st.download_button(
+                label=f"📥 ZIP 다운로드 (N_{start_lv:03d} ~ N_{end_lv:03d}.json)",
+                data=zip_bytes,
+                file_name=f"levels_{start_lv:03d}_{end_lv:03d}.zip",
+                mime="application/zip",
+                use_container_width=True,
+            )
+
+
+# ══════════════════════════════════════════════════════
+elif page == "🔧 5. 설정":
     st.title("🔧 설정")
 
     set_tab1, set_tab2 = st.tabs(["⚖️ 가중치 세부 설정", "📋 스택 파라미터 수정"])
@@ -1368,7 +1459,7 @@ elif page == "🔧 4. 설정":
 # ══════════════════════════════════════════════════════
 # 탭 5 — 아카이브
 # ══════════════════════════════════════════════════════
-elif page == "🗄️ 5. 아카이브":
+elif page == "🗄️ 6. 아카이브":
     st.title("🗄️ 아카이브")
     st.caption("설정값을 버전으로 저장하고 GitHub에 자동 커밋합니다.")
 
