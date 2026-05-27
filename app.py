@@ -901,6 +901,52 @@ elif page == "🗺️ 3. 판 모양 뷰어":
                 st.download_button("📥 H1 CSV", df_to_csv_bytes(h1df),
                                    "h1_metrics.csv", "text/csv", use_container_width=True)
 
+                # ── 실시간 난이도 점수 + 등급
+                W_H1_v = st.session_state.get("h1_weights", {
+                    "H1_1":8,"H1_2":12,"H1_3":10,"H1_4":8,"H1_5":10,
+                    "H1_6":12,"H1_7":12,"H1_8":8,"H1_9":8,"H1_10":5,
+                    "H1_11":5,"H1_12":6,"H1_13":4,"H1_14":4,"H1_15":4,
+                })
+                W_DIR_v = {
+                    "H1_1":True,"H1_2":True,"H1_3":True,"H1_4":True,"H1_5":False,
+                    "H1_6":False,"H1_7":False,"H1_8":False,"H1_9":False,"H1_10":False,
+                    "H1_11":False,"H1_12":False,"H1_13":True,"H1_14":True,"H1_15":True,
+                }
+                H1_REF_MIN = {"H1_1":4,"H1_2":0,"H1_3":0,"H1_4":0,"H1_5":0,
+                              "H1_6":0,"H1_7":0,"H1_8":0,"H1_9":0,"H1_10":0,
+                              "H1_11":0,"H1_12":0,"H1_13":0,"H1_14":0,"H1_15":0}
+                H1_REF_MAX = {"H1_1":64,"H1_2":200,"H1_3":30,"H1_4":80,"H1_5":15,
+                              "H1_6":80,"H1_7":60,"H1_8":60,"H1_9":20,"H1_10":40,
+                              "H1_11":10,"H1_12":5000,"H1_13":20,"H1_14":3,"H1_15":40}
+                tw_v = sum(W_H1_v.values())
+                sc_v = 0.0
+                for k, w in W_H1_v.items():
+                    v   = h1.get(k, 0)
+                    lo  = H1_REF_MIN.get(k, 0)
+                    hi  = H1_REF_MAX.get(k, 1)
+                    rng_v = hi - lo if hi > lo else 1
+                    vn  = max(0.0, min(1.0, (v - lo) / rng_v))
+                    if W_DIR_v.get(k, False): vn = 1 - vn
+                    sc_v += vn * w
+                bscore_v = round(sc_v / tw_v * 100, 1)
+                gname_v  = ('매우쉬움' if bscore_v < 25 else '쉬움' if bscore_v < 45 else
+                             '보통' if bscore_v < 60 else '어려움' if bscore_v < 75 else '매우어려움')
+                gcol_v   = {'매우쉬움':'#1890FF','쉬움':'#52C41A','보통':'#FADB14',
+                             '어려움':'#FA8C16','매우어려움':'#F5222D'}[gname_v]
+                gemoji_v = {'매우쉬움':'🔵','쉬움':'🟢','보통':'🟡',
+                             '어려움':'🟠','매우어려움':'🔴'}[gname_v]
+                st.markdown(
+                    f"""<div style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);
+                    border-left:4px solid {gcol_v};border-radius:10px;padding:12px 16px;margin:12px 0;">
+                    <div style="font-size:12px;color:#9ca3af;margin-bottom:4px;">📐 판 모양 난이도</div>
+                    <div style="display:flex;align-items:center;gap:12px;">
+                      <span style="font-size:28px;font-weight:700;color:{gcol_v};">{bscore_v}</span>
+                      <span style="font-size:18px;">{gemoji_v}</span>
+                      <span style="font-size:16px;font-weight:600;color:{gcol_v};">{gname_v}</span>
+                    </div></div>""",
+                    unsafe_allow_html=True
+                )
+
             show_coord = st.checkbox("좌표 표시", False)
             show_chips = st.checkbox("칩 색상 표시", True)
             hex_size   = st.slider("헥사 크기", 20, 60, 38)
