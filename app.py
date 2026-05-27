@@ -1319,10 +1319,27 @@ elif page == "🎲 4. JSON 생성기":
             progress_bar = st.progress(0)
             status_text  = st.empty()
 
+            GRADE_EMOJI = {
+                'very_easy': ('매우쉬움', '🔵'),
+                'easy':      ('쉬움',     '🟢'),
+                'normal':    ('보통',     '🟡'),
+                'hard':      ('어려움',   '🟠'),
+                'very_hard': ('매우어려움','🔴'),
+            }
             def on_progress(done, total):
-                lv_now = start_lv + done - 1
+                lv_now  = start_lv + done - 1
+                diff_now = calc_diff(lv_now)
+                g = ('very_easy' if diff_now < 25 else
+                     'easy'      if diff_now < 45 else
+                     'normal'    if diff_now < 60 else
+                     'hard'      if diff_now < 75 else 'very_hard')
+                grade_name, emoji = GRADE_EMOJI[g]
                 progress_bar.progress(done / total)
-                status_text.markdown(f"⚙️ 생성 중: **Lv {lv_now}** ({done}/{total})")
+                status_text.markdown(
+                    f"⚙️ **Lv {lv_now}** 생성 중 &nbsp;|&nbsp; "
+                    f"난이도 **{diff_now}** &nbsp; {emoji} {grade_name} &nbsp;|&nbsp; "
+                    f"({done}/{total})"
+                )
 
             df_n = tbl[tbl['LevelName'].str.startswith('N ', na=False)].reset_index(drop=True)
 
