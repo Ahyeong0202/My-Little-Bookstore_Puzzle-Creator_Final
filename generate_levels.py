@@ -179,7 +179,7 @@ def _parse_colors(val):
     if pd.isna(val): return []
     return [c.strip() for c in str(val).split(',') if c.strip()]
 
-def _make_hex_board(target_cells, max_dim=8):
+def _make_hex_board(target_cells, max_dim=6):
     best_r = 1
     for r in range(1, 8):
         if 3*r*r+3*r+1 <= target_cells: best_r = r
@@ -205,9 +205,9 @@ def _build_board(lv, color_ints, board_target, rng, total_alloc):
     t = board_target / 100.0
 
     # 그리드 크기: 높은 점수 → 작은 보드
-    cells_lo = int(15 + (1-t) * 34)
-    cells_hi = int(20 + (1-t) * 29)
-    target_cells = rng.randint(max(15, cells_lo), min(49, cells_hi))
+    cells_lo = int(15 + (1-t) * 10)
+    cells_hi = int(18 + (1-t) * 7)
+    target_cells = rng.randint(max(15, cells_lo), min(30, cells_hi))
 
     X, Y, tiles, playable = _make_hex_board(target_cells)
     pl = list(playable); rng.shuffle(pl)
