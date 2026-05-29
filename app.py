@@ -425,52 +425,52 @@ with st.sidebar:
 # ══════════════════════════════════════════════════════
 if page == "📖 1. 매뉴얼":
     st.title("📖 Puzzle Creator 사용 매뉴얼")
-    st.caption("헥사소트 퍼즐 레벨 난이도 설계 & 분석 도구")
+    st.caption("My Little Bookstore — 헥사소트 퍼즐 레벨 난이도 설계 & 분석 도구")
 
     st.markdown("---")
-
     st.markdown("## 이 앱은 무엇인가요?")
     st.markdown("""
-**Puzzle Creator**는 헥사소트(Hexasort) 퍼즐 게임의 레벨 난이도를 **설계하고 분석**하는 통합 도구입니다.
+**Puzzle Creator**는 헥사소트 퍼즐 게임 *My Little Bookstore*의 레벨 난이도를 **설계하고 분석**하는 통합 도구입니다.
 
-시장 게임 데이터(Lv 1~100 실측값)를 기준선으로 삼아 우리 게임의 판 모양과 스택 구성이
-적절한 난이도 곡선을 따르는지 확인하고, 500개 레벨의 파라미터를 관리할 수 있습니다.
+시장 1위 헥사소트 게임의 Lv 1~100 판 구성 데이터(SKKU 게임센터 랩 실측)를 기준선으로 삼아,
+우리 게임의 판 모양과 스택 파라미터가 올바른 난이도 곡선을 따르도록 자동 생성 및 검증합니다.
     """)
 
     st.markdown("---")
     st.markdown("## 전체 데이터 흐름")
     st.code("""
-시장 데이터 CSV (Lv 1~100 실측 H1 지표)
-        ↓  기준선 곡선 도출
-   baseline(N) = 70 - 52 × e^(-N/90)
-        ↓
-우리 게임 목표 난이도 곡선 확정
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-N_001~500.json (판 모양)
-        ↓  level_analyzer_v2.py
-   H1-1 ~ H1-15 지표 추출
-        ↓
-   board_score (판 모양 난이도, 0~100)
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-tblStage_500.xlsx (게임 파라미터)
-        ↓  DifficultyScore 컬럼
-   gameplay_score (게임 진행 난이도, 0~100)
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-board_score × 50% + gameplay_score × 50%
-        ↓
-   integrated_difficulty.csv (최종 통합 난이도)
+① 시장 데이터 분석
+   market_lv1_100.csv (SKKU 게임센터 랩 실측, Lv 1~100)
+        | H1-1~H1-15 지표 추출 + 가중치 합산
+   board_score 계산 -> 난이도 곡선 패턴 도출
+        |
+   target(N) = (70 - 52 x e^(-N/90)) + 3.71 + local_var[(N-1) mod 100]
+
+② JSON 판 모양 생성 (generate_levels.py)
+   target(N) 목표 설정
+        | 판 반복 생성 (최대 10회)
+   board_score ≈ target(N) 되는 판 선택
+        |
+   stack_score_target = target(N) x 2 - board_score
+        | 역산
+   tblStage 파라미터 자동 계산
+        |
+   통합 난이도 = (board_score + stack_score) / 2 ≈ target(N)
+
+③ 시각화 & 검증 (이 앱)
+   JSON + tblStage -> 난이도 곡선 비교 / 판 모양 확인 / 재생성
     """, language="")
 
     st.markdown("---")
     st.markdown("## 탭 안내")
     cols = st.columns(2)
     tabs_info = [
-        ("📖 1. 매뉴얼", "지금 보고 계신 페이지입니다. 앱 사용법과 용어를 안내합니다."),
-        ("📊 2. 난이도 분석", "시장 데이터 실측값과 우리 게임 통합 난이도를 한 차트에서 비교하고, 판 모양/게임 진행 가중치 비율을 조정합니다."),
-        ("🗺️ 3. 판 모양 뷰어", "레벨 JSON 파일을 시각화하고, 새 판을 직접 편집해 JSON으로 저장합니다."),
-        ("🎲 4. JSON 생성기", "난이도 곡선을 확인하고 레벨 범위를 입력해 JSON 파일을 생성하고 zip으로 다운로드합니다."),
-        ("🔧 5. 설정", "H1 지표별 세부 가중치(%) 조정 및 tblStage 스택 파라미터를 직접 수정합니다."),
-        ("🗄️ 5. 아카이브", "설정값을 버전으로 저장하고 GitHub에 자동 커밋합니다. 버전 비교도 가능합니다."),
+        ("📖 1. 매뉴얼", "지금 보고 계신 페이지입니다. 전체 흐름, 용어, 파일 구조를 안내합니다."),
+        ("📊 2. 난이도 분석", "시장 데이터 원본 테이블 + 우리 게임 통합 난이도 곡선 비교. 판모양/게임진행 가중치 조정 가능."),
+        ("🗺️ 3. 판 모양 뷰어", "레벨 JSON을 헥사 그리드로 시각화. 편집 모드에서 타일 수정 후 JSON 저장. 실시간 난이도 점수 표시."),
+        ("🎲 4. JSON 생성기", "레벨 범위 입력 -> 난이도 곡선 미리보기 -> 생성 -> 실시간 진행 표시 -> zip 다운로드."),
+        ("🔧 5. 설정", "H1 지표별 가중치(%) 조정 및 tblStage 스택 파라미터 직접 수정."),
+        ("🗄️ 6. 아카이브", "설정값을 버전으로 저장하고 GitHub에 자동 커밋. 버전 간 비교 가능."),
     ]
     for i, (name, desc) in enumerate(tabs_info):
         with cols[i%2]:
@@ -481,16 +481,35 @@ board_score × 50% + gameplay_score × 50%
 </div>""", unsafe_allow_html=True)
 
     st.markdown("---")
-    st.markdown("## 필요한 파일")
+    st.markdown("## 파일 구조")
     st.markdown("""
-| 파일 | 설명 | 사용 탭 |
+| 파일 | 위치 | 설명 |
 |---|---|---|
-| `integrated_difficulty.csv` | 레벨별 통합 난이도 점수 (board/gameplay/integrated) | 2, 4 |
-| `tblStage_500.xlsx` | 스택·게임 파라미터 원본 (Stage 시트) | 2, 4 |
-| 시장 데이터 CSV | 경쟁 타이틀 Lv 1~100 H1 실측값 | 2 |
-| `N_001.json` ~ `N_500.json` | 레벨별 판 모양 데이터 | 3 |
+| `market_lv1_100.csv` | `data/market/` | 시장 게임 Lv 1~100 H1 실측값 (기본 내장) |
+| `tblStage_500.xlsx` | `data/` | 500개 스테이지 게임 파라미터 |
+| `N_001.json` ~ `N_500.json` | `data/levels/` | 레벨별 판 모양 JSON |
+| `integrated_difficulty.csv` | `data/` | 레벨별 통합 난이도 |
+| `generate_levels.py` | 루트 | JSON + tblStage 자동 생성 스크립트 |
+| `level_analyzer_v2.py` | 루트 | JSON → H1 지표 추출 파서 |
 
-> **사이드바**에서 파일을 업로드하면 모든 탭에서 유지됩니다.
+> 시장 데이터 CSV는 앱에 기본 내장되어 있어 별도 업로드 없이 사용 가능합니다.
+    """)
+
+    st.markdown("---")
+    st.markdown("## JSON 업데이트 방법")
+    st.markdown("""
+**방법 A — 앱에서 직접 생성 (추천)**
+1. `🎲 4. JSON 생성기` 탭으로 이동
+2. 레벨 범위 슬라이더로 생성할 구간 선택
+3. 난이도 곡선 미리보기 확인
+4. **생성** 버튼 클릭 → 실시간으로 레벨별 난이도 점수 확인
+5. 완료 후 **zip 다운로드**
+6. GitHub `data/levels/` 폴더에 덮어쓰기 업로드
+
+**방법 B — 개별 레벨 수정**
+1. `🗺️ 3. 판 모양 뷰어` → 레벨 선택
+2. 편집 모드 ON → 타일 수정
+3. JSON 저장 → GitHub에 해당 파일만 교체
     """)
 
     st.markdown("---")
@@ -498,25 +517,26 @@ board_score × 50% + gameplay_score × 50%
 
     with st.expander("TileType — 셀 종류"):
         st.markdown("""
-| 코드 | 이름 | 설명 |
-|---|---|---|
-| 0 | Normal | 일반 빈 셀 |
-| 1 | Blank | 비활성 셀 (그리드에서 제외) |
-| 2 | Stack | 칩이 쌓인 셀 |
-| 3 | Lock | 잠긴 셀 (Level로 해제) |
-| 4 | Plank | 나무판 (Level로 해제) |
-| 5 | Ice | 얼음 (UnlockLevel로 해제) |
-| 6 | StackLock | 잠긴 스택 (UnlockLevel로 해제) |
-| 7 | Grass | 잔디 셀 |
-| 8 | Ads | 광고 셀 |
-| 9 | CameraPicture | 카메라 셀 |
+| 코드 | 이름 | 설명 | 등장 레벨 |
+|---|---|---|---|
+| 0 | Normal | 플레이어가 스택을 놓는 일반 빈 칸 | Lv 1~ |
+| 1 | Blank | 비활성 셀 (그리드 밖) | — |
+| 2 | Stack | 초기부터 칩이 쌓인 셀 | Lv 1~ |
+| 3 | Lock | 잠긴 셀 — Level 달성 시 해제 | Lv 9~ |
+| 4 | Plank | 나무판 — Level 달성 시 파괴 | Lv 59~ |
+| 5 | Ice | 얼음 — UnlockLevel 달성 시 해제, 스택 포함 | Lv 179~ |
+| 6 | StackLock | 잠긴 스택 — UnlockLevel 달성 시 해제 | Lv 29~ |
+| 7 | Grass | 잔디 — 위에서 소팅 시 제거 | Lv 299~ |
+| 8 | Ads | 광고 — 시청 시 빈 칸 획득 | Lv 49~ |
         """)
 
     with st.expander("H1 지표 — 판 모양 난이도 수치"):
         st.markdown("""
-| 지표 | 설명 | 방향 |
+시장 데이터 min/max로 정규화 후 가중치 합산 → board_score (0~100점)
+
+| 지표 | 설명 | 난이도 방향 |
 |---|---|---|
-| H1-1 | 전체 그리드 수 (XCells×YCells) | 많을수록 쉬움 |
+| H1-1 | 전체 그리드 수 | 많을수록 쉬움 |
 | H1-2 | Normal 셀 열린 변 합 | 낮을수록 어려움 |
 | H1-3 | Normal 셀 개수 | 적을수록 어려움 |
 | H1-4 | Stack+StackLock 열린 변 합 | 낮을수록 어려움 |
@@ -527,10 +547,22 @@ board_score × 50% + gameplay_score × 50%
 | H1-9 | Lock 개수 | 많을수록 어려움 |
 | H1-10 | StackLock 열린 변 합 | 많을수록 어려움 |
 | H1-11 | StackLock 개수 | 많을수록 어려움 |
-| H1-12 | 잠금 해제 기준 합 | 클수록 어려움 |
+| H1-12 | 잠금 해제 기준 합 (Level + UnlockLevel) | 클수록 어려움 |
 | H1-13 | Ads 열린 변 합 | 낮을수록 어려움 |
 | H1-14 | Ads 수 (최대 3 캡) | 많을수록 쉬움 |
 | H1-15 | 기믹 열린 변 합 (Plank/Ice/Grass/Camera) | 낮을수록 어려움 |
+        """)
+
+    with st.expander("tblStage 파라미터"):
+        st.markdown("""
+| 파라미터 | 설명 |
+|---|---|
+| TotalAllocation | 목표 점수(할당량). 채우면 다음 색상 추가 임계값 도달 |
+| InitialAvailableColors | 게임 시작 시 사용 색상 풀. **초기 판의 맨 위 칩은 이 색상만 사용** |
+| DistinctColorCount | 스택 하나에서 사용하는 색상 수. 임계값마다 업데이트 |
+| ColorDuplicationRate | 완전히 같은 색상 스택 생성 확률. 낮을수록 어려움 |
+| ProgressAddNewColor | 색상 추가 임계값. TotalAllocation 내 균등 분배. NewColorsMilestones와 1:1 |
+| NewColorsMilestones | 임계값 도달 시 추가되는 색상. InitialAvailableColors와 중복 불가 |
         """)
 
     with st.expander("칩 색상 코드"):
@@ -554,31 +586,18 @@ board_score × 50% + gameplay_score × 50%
         """)
 
     with st.expander("난이도 곡선 공식"):
-        st.markdown(r"""
-시장 게임 H1 데이터 통계 분석으로 도출한 공식입니다.
+        st.markdown("""
+**시장 게임 Lv 1~100 데이터 분석으로 도출 (SKKU 게임센터 랩)**
 
-$$\text{baseline}(N) = 70 - 52 \times e^{-N/90}$$
+```
+target(N) = (70 - 52 x e^(-N/90)) + 3.71 + local_var[(N-1) mod 100]
+```
 
-$$\text{target}(N) = \text{baseline}(N) + 3.71 + \text{local\_var}[(N-1) \bmod 100]$$
-
-$$\text{최종값} = \text{clip}(\text{target}, 0, 100)$$
-
-- **Lv 1** ≈ 22pt → **Lv 100** ≈ 57pt → **Lv 200** ≈ 68pt → **~74pt** 수렴
-- `local_var`: 시장 게임에서 추출한 100개 오르내림 패턴 반복
+- **기준선**: Lv1≈18점 → Lv100≈48점 → 최대 ~74점 수렴
+- **local_var**: 시장 데이터에서 추출한 100개 오르내림 패턴 (100레벨 주기 반복)
+- **통합 난이도**: board_score x 50% + stack_score x 50% ≈ target(N)
         """)
 
-    st.markdown("---")
-    st.markdown("## GitHub 저장 안내")
-    st.markdown(f"""
-5번 탭(아카이브)에서 설정을 저장하면 **{GITHUB_REPO}** 에 자동으로 커밋됩니다.
-
-**최초 설정 (사이드바 → 🔑 GitHub 설정)**
-1. GitHub → Settings → Developer Settings → Personal Access Token 발급
-2. 권한: `repo` (전체) 체크
-3. 발급된 토큰을 사이드바에 입력
-
-저장 경로: `data/archives/YYYYMMDD_HHMMSS.json`
-    """)
 
 # ══════════════════════════════════════════════════════
 # 탭 2 — 난이도 분석
@@ -849,7 +868,7 @@ elif page == "🗺️ 3. 판 모양 뷰어":
         # ── 소스 선택
         vc1, vc2 = st.columns([1,3])
         with vc1:
-            src = st.radio("소스", ["레벨 번호", "난이도 선택", "JSON 업로드"], horizontal=True)
+            src = st.radio("소스", ["레벨 번호","JSON 업로드"], horizontal=True)
             data = None
             fname_default = "N_001.json"
             if src == "레벨 번호":
@@ -858,45 +877,6 @@ elif page == "🗺️ 3. 판 모양 뷰어":
                 data = load_level_local(int(lv))
                 if data is None:
                     st.warning(f"N_{lv:03d}.json 없음 — JSON 업로드 사용")
-
-            elif src == "난이도 선택":
-                intg_df = st.session_state.intg_df
-                if intg_df is None:
-                    st.warning("사이드바에서 integrated_difficulty.csv를 업로드해주세요.")
-                else:
-                    GRADE_RANGES = {
-                        '전체':        (0,   100),
-                        '🔵 매우쉬움': (0,    25),
-                        '🟢 쉬움':     (25,   45),
-                        '🟡 보통':     (45,   60),
-                        '🟠 어려움':   (60,   75),
-                        '🔴 매우어려움':(75,  100),
-                    }
-                    grade_sel = st.selectbox("등급 필터", list(GRADE_RANGES.keys()))
-                    lo, hi = GRADE_RANGES[grade_sel]
-
-                    # 해당 등급 레벨 필터링 + 난이도 순 정렬
-                    filtered = intg_df.copy()
-                    filtered['lv'] = range(1, len(filtered) + 1)
-                    mask = (filtered['integrated'] >= lo) & (filtered['integrated'] < hi)
-                    if grade_sel == '전체':
-                        mask = pd.Series([True] * len(filtered))
-                    filtered = filtered[mask].sort_values('integrated')
-
-                    if filtered.empty:
-                        st.info("해당 등급의 레벨이 없습니다.")
-                    else:
-                        options = [
-                            f"Lv {int(r['lv']):03d} — {r['integrated']:.1f}점"
-                            for _, r in filtered.iterrows()
-                        ]
-                        sel_opt = st.selectbox("레벨 선택", options)
-                        sel_lv  = int(sel_opt.split()[1])
-                        fname_default = f"N_{sel_lv:03d}.json"
-                        data = load_level_local(sel_lv)
-                        if data is None:
-                            st.warning(f"N_{sel_lv:03d}.json 없음")
-
             else:
                 uj = st.file_uploader("JSON 파일", type=["json"], key="uj_view")
                 if uj:
@@ -939,52 +919,6 @@ elif page == "🗺️ 3. 판 모양 뷰어":
                 h1df = pd.DataFrame([h1e])
                 st.download_button("📥 H1 CSV", df_to_csv_bytes(h1df),
                                    "h1_metrics.csv", "text/csv", use_container_width=True)
-
-                # ── 실시간 난이도 점수 + 등급
-                W_H1_v = st.session_state.get("h1_weights", {
-                    "H1_1":8,"H1_2":12,"H1_3":10,"H1_4":8,"H1_5":10,
-                    "H1_6":12,"H1_7":12,"H1_8":8,"H1_9":8,"H1_10":5,
-                    "H1_11":5,"H1_12":6,"H1_13":4,"H1_14":4,"H1_15":4,
-                })
-                W_DIR_v = {
-                    "H1_1":True,"H1_2":True,"H1_3":True,"H1_4":True,"H1_5":False,
-                    "H1_6":False,"H1_7":False,"H1_8":False,"H1_9":False,"H1_10":False,
-                    "H1_11":False,"H1_12":False,"H1_13":True,"H1_14":True,"H1_15":True,
-                }
-                H1_REF_MIN = {"H1_1":4,"H1_2":0,"H1_3":0,"H1_4":0,"H1_5":0,
-                              "H1_6":0,"H1_7":0,"H1_8":0,"H1_9":0,"H1_10":0,
-                              "H1_11":0,"H1_12":0,"H1_13":0,"H1_14":0,"H1_15":0}
-                H1_REF_MAX = {"H1_1":64,"H1_2":200,"H1_3":30,"H1_4":80,"H1_5":15,
-                              "H1_6":80,"H1_7":60,"H1_8":60,"H1_9":20,"H1_10":40,
-                              "H1_11":10,"H1_12":5000,"H1_13":20,"H1_14":3,"H1_15":40}
-                tw_v = sum(W_H1_v.values())
-                sc_v = 0.0
-                for k, w in W_H1_v.items():
-                    v   = h1.get(k, 0)
-                    lo  = H1_REF_MIN.get(k, 0)
-                    hi  = H1_REF_MAX.get(k, 1)
-                    rng_v = hi - lo if hi > lo else 1
-                    vn  = max(0.0, min(1.0, (v - lo) / rng_v))
-                    if W_DIR_v.get(k, False): vn = 1 - vn
-                    sc_v += vn * w
-                bscore_v = round(sc_v / tw_v * 100, 1)
-                gname_v  = ('매우쉬움' if bscore_v < 25 else '쉬움' if bscore_v < 45 else
-                             '보통' if bscore_v < 60 else '어려움' if bscore_v < 75 else '매우어려움')
-                gcol_v   = {'매우쉬움':'#1890FF','쉬움':'#52C41A','보통':'#FADB14',
-                             '어려움':'#FA8C16','매우어려움':'#F5222D'}[gname_v]
-                gemoji_v = {'매우쉬움':'🔵','쉬움':'🟢','보통':'🟡',
-                             '어려움':'🟠','매우어려움':'🔴'}[gname_v]
-                st.markdown(
-                    f"""<div style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);
-                    border-left:4px solid {gcol_v};border-radius:10px;padding:12px 16px;margin:12px 0;">
-                    <div style="font-size:12px;color:#9ca3af;margin-bottom:4px;">📐 판 모양 난이도</div>
-                    <div style="display:flex;align-items:center;gap:12px;">
-                      <span style="font-size:28px;font-weight:700;color:{gcol_v};">{bscore_v}</span>
-                      <span style="font-size:18px;">{gemoji_v}</span>
-                      <span style="font-size:16px;font-weight:600;color:{gcol_v};">{gname_v}</span>
-                    </div></div>""",
-                    unsafe_allow_html=True
-                )
 
             show_coord = st.checkbox("좌표 표시", False)
             show_chips = st.checkbox("칩 색상 표시", True)
@@ -1406,7 +1340,7 @@ elif page == "🎲 4. JSON 생성기":
     st.title("🎲 JSON 생성기")
     st.caption("난이도 곡선 기반으로 레벨 범위를 선택해 JSON 파일을 생성하고 다운로드합니다.")
 
-    from generate_levels import generate_range_zip, target_diff as calc_diff
+    from generate_levels import generate_range_zip, difficulty as calc_diff
 
     tbl = st.session_state.tbl_df
 
@@ -1473,7 +1407,7 @@ elif page == "🎲 4. JSON 생성기":
                 'hard':      ('어려움',   '🟠'),
                 'very_hard': ('매우어려움','🔴'),
             }
-            def on_progress(done, total, lv_now, bs=0, ss=0, intg=0):
+            def on_progress(done, total):
                 lv_now  = start_lv + done - 1
                 diff_now = calc_diff(lv_now)
                 g = ('very_easy' if diff_now < 25 else
