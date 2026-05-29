@@ -1406,7 +1406,7 @@ elif page == "🎲 4. JSON 생성기":
     st.title("🎲 JSON 생성기")
     st.caption("난이도 곡선 기반으로 레벨 범위를 선택해 JSON 파일을 생성하고 다운로드합니다.")
 
-    from generate_levels import generate_range_zip, difficulty as calc_diff
+    from generate_levels import generate_range_zip, target_diff as calc_diff
 
     tbl = st.session_state.tbl_df
 
