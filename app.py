@@ -670,7 +670,7 @@ elif page == "📊 2. 난이도 분석":
     # ── 차트 표시 옵션
     st.markdown("**표시할 곡선 선택**")
     oc1, oc2, oc3, oc4, oc5 = st.columns(5)
-    show_target   = oc1.checkbox("목표 곡선", True)
+    show_target   = oc1.checkbox("게임 진행 목표", True)
     show_market   = oc2.checkbox("시장 board", True)
     show_our_intg = oc3.checkbox("우리 통합", True)
     show_our_board= oc4.checkbox("우리 board (정규화)", False)
@@ -684,14 +684,14 @@ elif page == "📊 2. 난이도 분석":
     n_all  = np.arange(1, 501)
     fig = go.Figure()
 
-    # 목표 곡선
+    # 게임 진행 목표
     if show_target:
         fig.add_trace(go.Scatter(
             x=n_all, y=baseline_curve(n_all), name="기준선 baseline(N)",
             line=dict(color="#58a6ff", width=1.5, dash="dot"), opacity=0.6
         ))
         fig.add_trace(go.Scatter(
-            x=n_all, y=target_curve(n_all), name="목표 곡선 target(N)",
+            x=n_all, y=target_curve(n_all), name="게임 진행 목표",
             line=dict(color="#58a6ff", width=2), opacity=0.9
         ))
 
@@ -869,7 +869,7 @@ elif page == "📊 2. 난이도 분석":
             for i in range(0, len(intg), zone_size):
                 lo = i+1; hi = min(i+zone_size, len(intg))
                 target_avgs.append(round(sum(tgt(n) for n in range(lo, hi+1))/(hi-lo+1), 1))
-            zdf["목표(target)"] = target_avgs
+            zdf["게임 진행 목표"] = target_avgs
 
             fig3 = go.Figure()
 
@@ -903,8 +903,8 @@ elif page == "📊 2. 난이도 분석":
             ))
             # target(N) 기준선
             fig3.add_trace(go.Scatter(
-                x=zdf["구간"], y=zdf["목표(target)"],
-                name="목표 곡선", mode="lines+markers",
+                x=zdf["구간"], y=zdf["게임 진행 목표"],
+                name="게임 진행 목표", mode="lines+markers",
                 line=dict(color="#f5222d", width=1.5, dash="dot"),
                 marker=dict(size=5, color="#f5222d"),
             ))
@@ -921,7 +921,7 @@ elif page == "📊 2. 난이도 분석":
             st.plotly_chart(fig3, use_container_width=True)
 
             # 표 (raw 값 포함)
-            show_cols = ["구간", "판 모양 (raw)", "게임 진행 (raw)", "통합 평균", "목표(target)"]
+            show_cols = ["구간", "판 모양 (raw)", "게임 진행 (raw)", "통합 평균", "게임 진행 목표"]
             st.dataframe(zdf[show_cols].rename(columns={
                 "판 모양 (raw)": f"판 모양 ({w_b}%)",
                 "게임 진행 (raw)": f"게임 진행 ({w_g}%)",
@@ -1583,7 +1583,7 @@ elif page == "🔧 5. 설정":
             fig_prev.add_trace(go.Scatter(x=list(range(1,len(intg)+1)),y=custom_sm.tolist(),
                 name='통합 이동평균',line=dict(color='#3fb950',width=2)))
             fig_prev.add_trace(go.Scatter(x=np.arange(1,501),y=target_curve(np.arange(1,501)),
-                name='목표 곡선',line=dict(color='#58a6ff',width=1.5,dash='dash'),opacity=0.6))
+                name='게임 진행 목표',line=dict(color='#58a6ff',width=1.5,dash='dash'),opacity=0.6))
             fig_prev.update_layout(height=280,plot_bgcolor=T["plot_bg"],paper_bgcolor=T["plot_bg"],
                 font_color=T["text"],xaxis_title='레벨',
                 xaxis=dict(gridcolor=T["grid_line"]),yaxis=dict(range=[0,105],gridcolor=T["grid_line"]),
