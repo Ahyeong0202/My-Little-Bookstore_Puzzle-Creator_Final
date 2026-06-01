@@ -10,6 +10,7 @@ import io
 import base64
 import requests
 from datetime import datetime
+from urllib.parse import quote
 
 st.set_page_config(page_title="Puzzle Creator", layout="wide", page_icon="🧩")
 
@@ -244,6 +245,21 @@ hr { border-color: #E8D5C0; }
     background-color: #6B3A2A !important; color: #FFFFFF !important;
     border: none !important;
 }
+[data-testid="stFileUploaderDropzone"] button * { color: #FFFFFF !important; }
+[data-testid="stFileUploaderDropzone"] button p { color: #FFFFFF !important; }
+[data-testid="stFileUploaderDropzone"] button span { color: #FFFFFF !important; }
+[data-testid="stFileUploader"] button {
+    background-color: #6B3A2A !important; color: #FFFFFF !important;
+    border: none !important;
+}
+[data-testid="stFileUploader"] button * { color: #FFFFFF !important; }
+[data-testid="stFileUploader"] [data-testid="stBaseButton-secondary"] {
+    background-color: #6B3A2A !important; color: #FFFFFF !important;
+}
+[data-testid="stFileUploader"] [data-testid="stBaseButton-secondary"] p,
+[data-testid="stFileUploader"] [data-testid="stBaseButton-secondary"] span {
+    color: #FFFFFF !important;
+}
 
 /* ── progress */
 [data-testid="stProgressBar"] div { background-color: #6B3A2A !important; }
@@ -265,6 +281,81 @@ hr { border-color: #E8D5C0; }
 /* ── alert/warning/info 텍스트 */
 [data-testid="stAlert"] { background: #FBF5EE !important; border-radius: 8px; }
 [data-testid="stAlert"] p, [data-testid="stAlert"] * { color: #2C1810 !important; }
+
+/* ── 전역: 옅은 회색 글씨 → 다크 브라운으로 강제 */
+p, span, div, label, li, td, th, small {
+    color: #2C1810;
+}
+/* plotly 범례/축 텍스트는 제외 (SVG) */
+svg text { fill: #2C1810; }
+
+/* ── 파일 업로더 Browse 버튼 전체 */
+[data-testid="stFileUploaderDropzone"] button,
+[data-testid="stFileUploaderDropzone"] button *,
+[data-testid="stFileUploaderDropzone"] button p,
+[data-testid="stFileUploaderDropzone"] button span,
+[data-testid="stFileUploaderDropzoneInstructions"] button,
+section[data-testid="stFileUploaderDropzone"] > div > button {
+    background-color: #6B3A2A !important;
+    color: #FFFFFF !important;
+}
+
+/* ── 파일 업로더 드롭존 텍스트 */
+[data-testid="stFileUploaderDropzoneInstructions"] *,
+[data-testid="stFileUploaderDropzoneInstructions"] span,
+[data-testid="stFileUploaderDropzoneInstructions"] p {
+    color: #2C1810 !important;
+}
+
+/* ── 사이드바 Browse files 버튼 */
+[data-testid="stSidebar"] [data-testid="stFileUploaderDropzone"] button {
+    background-color: #6B3A2A !important;
+    color: #FFFFFF !important;
+    border: none !important;
+}
+[data-testid="stSidebar"] [data-testid="stFileUploaderDropzone"] button * {
+    color: #FFFFFF !important;
+}
+[data-testid="stSidebar"] [data-testid="stFileUploaderDropzone"] button p {
+    color: #FFFFFF !important;
+}
+
+/* ── Plotly 차트 범례 텍스트 */
+.js-plotly-plot .plotly .legend text { fill: #2C1810 !important; }
+.js-plotly-plot .plotly .xtick text,
+.js-plotly-plot .plotly .ytick text { fill: #2C1810 !important; }
+.js-plotly-plot .plotly .g-xtitle text,
+.js-plotly-plot .plotly .g-ytitle text { fill: #2C1810 !important; }
+
+/* ── 탭 텍스트 */
+[data-testid="stTabs"] button p,
+[data-testid="stTabs"] button span { color: #2C1810 !important; }
+[data-testid="stTabs"] button[aria-selected="true"] p,
+[data-testid="stTabs"] button[aria-selected="true"] span {
+    color: #6B3A2A !important; font-weight: 700;
+}
+
+/* ── expander 제목 */
+[data-testid="stExpander"] summary p,
+[data-testid="stExpander"] summary span { color: #2C1810 !important; }
+
+/* ── select_slider / slider 값 표시 */
+[data-testid="stSlider"] p,
+[data-testid="stSlider"] span { color: #2C1810 !important; }
+
+/* ── metric 델타 */
+[data-testid="stMetricDelta"] { color: #6B3A2A !important; }
+
+/* ── 아카이브 텍스트 */
+[data-testid="stDataEditor"] td,
+[data-testid="stDataEditor"] th { color: #2C1810 !important; background: #FFFFFF; }
+
+/* ── caption 강화 */
+.stCaption, [data-testid="stCaptionContainer"] * { color: #7A5C45 !important; }
+
+/* ── data_editor */
+[data-testid="stDataEditor"] * { color: #2C1810 !important; }
+[data-testid="stDataFrameGlideDataEditor"] * { color: #2C1810 !important; }
 
 /* ── 캡션 */
 [data-testid="stCaptionContainer"] p, .stCaption { color: #7A5C45 !important; }
@@ -575,19 +666,21 @@ if page == "🏠 홈":
         m1.metric("퍼즐 레벨", "500개")
         m2.metric("시장 데이터", "Lv 1~100")
         m3.metric("난이도 지표", "15개 (H1)")
-        m4.metric("출시 목표", "2026. 10")
+        m4.metric("출시 목표", "2025. 9")
 
     st.markdown('<hr style="border-color:#E8D5C0;margin:24px 0;">', unsafe_allow_html=True)
 
     # ── 게임 플레이 영상
     st.markdown('<div class="section-header">🎮 게임 플레이 영상</div>', unsafe_allow_html=True)
     video_path = BASE / "assets" / "videos" / "Hexasort Puzzle.mp4"
-    video_url  = f"{GITHUB_RAW_BASE}/assets/videos/Hexasort Puzzle.mp4"
-    if video_path.exists():
-        with open(video_path, "rb") as vf:
-            st.video(vf.read())
-    else:
-        st.video(video_url)
+    video_url  = f"{GITHUB_RAW_BASE}/assets/videos/{quote('Hexasort Puzzle.mp4')}"
+    col_vid, col_pad = st.columns([2, 1])
+    with col_vid:
+        if video_path.exists():
+            with open(video_path, "rb") as vf:
+                st.video(vf.read())
+        else:
+            st.video(video_url)
 
     st.markdown('<hr style="border-color:#E8D5C0;margin:24px 0;">', unsafe_allow_html=True)
 
@@ -627,14 +720,15 @@ if page == "🏠 홈":
             img_name = imgs[idx]
             img_path = img_paths[idx]
             delay = f"{0.1 + idx*0.07:.2f}s"
-            img_url = f"{GITHUB_RAW_BASE}/assets/images/{img_name}"
+            img_url = f"{GITHUB_RAW_BASE}/assets/images/{quote(img_name)}"
             with c:
                 st.markdown(
-                    f"""<div class="intro-card" style="animation-delay:{delay};">
+                    f'''<div class="intro-card" style="animation-delay:{delay};">
                     <div class="intro-num">{idx+1} / 18</div>
                     <img src="{img_url}" alt="게임 소개 {idx+1}"
+                         style="width:100%;display:block;"
                          onerror="this.parentElement.style.display='none'">
-                    </div>""",
+                    </div>''',
                     unsafe_allow_html=True
                 )
 
