@@ -826,35 +826,106 @@ elif page == "📊 2. 난이도 분석":
         if intg is None:
             st.warning("사이드바에서 integrated_difficulty.csv를 업로드해주세요.")
         else:
-            c1,c2,c3 = st.columns(3)
-            c1.markdown(f'<div class="metric-card"><div class="metric-val">{intg["integrated"].mean():.1f}</div><div class="metric-lbl">평균 통합 난이도</div></div>', unsafe_allow_html=True)
-            c2.markdown(f'<div class="metric-card"><div class="metric-val">{intg["integrated"].max():.1f}</div><div class="metric-lbl">최고점 (Lv{intg["integrated"].idxmax()+1})</div></div>', unsafe_allow_html=True)
-            c3.markdown(f'<div class="metric-card"><div class="metric-val">{intg["integrated"].min():.1f}</div><div class="metric-lbl">최저점 (Lv{intg["integrated"].idxmin()+1})</div></div>', unsafe_allow_html=True)
+            # 현재 가중치로 통합 난이도 재계산
+            w_b = st.session_state.w_board
+            w_g = st.session_state.w_gameplay
+            custom_intg = (intg["board_score"] * w_b + intg["gameplay_score"] * w_g) / 100
+
+            c1, c2, c3 = st.columns(3)
+            c1.markdown(f'<div class="metric-card"><div class="metric-val">{custom_intg.mean():.1f}</div><div class="metric-lbl">평균 통합 난이도</div></div>', unsafe_allow_html=True)
+            c2.markdown(f'<div class="metric-card"><div class="metric-val">{custom_intg.max():.1f}</div><div class="metric-lbl">최고점 (Lv{custom_intg.idxmax()+1})</div></div>', unsafe_allow_html=True)
+            c3.markdown(f'<div class="metric-card"><div class="metric-val">{custom_intg.min():.1f}</div><div class="metric-lbl">최저점 (Lv{custom_intg.idxmin()+1})</div></div>', unsafe_allow_html=True)
             st.markdown("")
-            zone_size = st.select_slider("구간 크기", [10,25,50,100], value=50)
+
+            zone_size = st.select_slider("구간 크기", [10, 25, 50, 100], value=50, key="zone_sz")
+
+            # 구간별 집계
             zones = []
             for i in range(0, len(intg), zone_size):
-                s2 = intg.iloc[i:i+zone_size]
-                zones.append({"구간":f"Lv{i+1}-{min(i+zone_size,len(intg))}",
-                    "판 모양":round(s2["board_score"].mean(),1),
-                    "게임 진행":round(s2["gameplay_score"].mean(),1),
-                    "통합 평균":round(s2["integrated"].mean(),1),
-                    "최고":round(s2["integrated"].max(),1),
-                    "최저":round(s2["integrated"].min(),1)})
+                s2   = intg.iloc[i:i+zone_size]
+                ci   = custom_intg.iloc[i:i+zone_size]
+                label = f"Lv{i+1}-{min(i+zone_size, len(intg))}"
+                # 누적 막대용: 판 모양 기여 / 게임 진행 기여 (가중치 적용)
+                board_contrib    = round(s2["board_score"].mean() * w_b / 100, 1)
+                gameplay_contrib = round(s2["gameplay_score"].mean() * w_g / 100, 1)
+                integrated_avg   = round(ci.mean(), 1)
+                zones.append({
+                    "구간": label,
+                    "판 모양 기여": board_contrib,
+                    "게임 진행 기여": gameplay_contrib,
+                    "통합 평균": integrated_avg,
+                    "판 모양 (raw)": round(s2["board_score"].mean(), 1),
+                    "게임 진행 (raw)": round(s2["gameplay_score"].mean(), 1),
+                })
             zdf = pd.DataFrame(zones)
+
+            # 누적 막대그래프 + target(N) 기준선
+            import math, numpy as np
+            LOCAL_VAR = [-4.18,-10.77,-9.35,0.77,-12.51,-24.5,16.84,7.51,-23.07,-4.67,49.59,28.79,-0.01,-7.79,-21.15,0.89,26.65,31.29,18.55,10.54,64.81,44.5,-0.6,26.22,18.69,15.97,18.07,48.05,15.12,46.61,-0.1,36.66,9.08,-1.83,-10.36,-9.82,16.77,-5.48,-2.13,0.26,-35.93,-12.55,-8.93,8.39,23.32,-11.53,3.89,-13.47,8.79,14.44,-19.23,-9.61,-6.62,-0.31,-15.68,-45.8,-17.16,8.99,-15.73,6.0,-12.44,-5.44,33.37,7.2,2.44,-12.58,-8.38,22.13,-14.12,-6.12,-17.77,-24.71,32.97,-11.54,1.42,-8.55,-1.06,-9.44,7.65,-0.38,-34.71,-29.79,-21.23,-26.16,2.33,12.95,-16.47,-34.48,5.62,9.64,-15.79,-14.75,44.79,5.4,-39.42,-16.52,-20.26,-44.14,1.36,-8.16]
+            def tgt(N): return float(np.clip(70-52*math.exp(-N/90)+3.71+LOCAL_VAR[(N-1)%100],0,100))
+
+            # 구간별 target 평균
+            target_avgs = []
+            for i in range(0, len(intg), zone_size):
+                lo = i+1; hi = min(i+zone_size, len(intg))
+                target_avgs.append(round(sum(tgt(n) for n in range(lo, hi+1))/(hi-lo+1), 1))
+            zdf["목표(target)"] = target_avgs
+
             fig3 = go.Figure()
-            fig3.add_trace(go.Bar(x=zdf["구간"],y=zdf["판 모양"],name="판 모양",marker_color="#fa8c16"))
-            fig3.add_trace(go.Bar(x=zdf["구간"],y=zdf["게임 진행"],name="게임 진행",marker_color="#1890ff"))
-            fig3.add_trace(go.Scatter(x=zdf["구간"],y=zdf["통합 평균"],mode="lines+markers",
-                name="통합 평균",line=dict(color="#3fb950",width=2)))
-            fig3.update_layout(height=300, barmode="group",
+
+            # 누적 막대: 판 모양 기여 (아래)
+            fig3.add_trace(go.Bar(
+                x=zdf["구간"], y=zdf["판 모양 기여"],
+                name=f"판 모양 ({w_b}%)",
+                marker_color="#fa8c16",
+                text=zdf["판 모양 기여"].apply(lambda v: f"{v:.1f}"),
+                textposition="inside",
+                textfont=dict(size=10, color="white"),
+            ))
+            # 누적 막대: 게임 진행 기여 (위)
+            fig3.add_trace(go.Bar(
+                x=zdf["구간"], y=zdf["게임 진행 기여"],
+                name=f"게임 진행 ({w_g}%)",
+                marker_color="#1890ff",
+                text=zdf["게임 진행 기여"].apply(lambda v: f"{v:.1f}"),
+                textposition="inside",
+                textfont=dict(size=10, color="white"),
+            ))
+            # 통합 평균 꺾은선
+            fig3.add_trace(go.Scatter(
+                x=zdf["구간"], y=zdf["통합 평균"],
+                name="통합 난이도", mode="lines+markers+text",
+                line=dict(color="#3fb950", width=2.5),
+                marker=dict(size=7, color="#3fb950"),
+                text=zdf["통합 평균"].apply(lambda v: f"{v:.1f}"),
+                textposition="top center",
+                textfont=dict(size=10, color="#3fb950"),
+            ))
+            # target(N) 기준선
+            fig3.add_trace(go.Scatter(
+                x=zdf["구간"], y=zdf["목표(target)"],
+                name="목표 곡선", mode="lines+markers",
+                line=dict(color="#f5222d", width=1.5, dash="dot"),
+                marker=dict(size=5, color="#f5222d"),
+            ))
+
+            fig3.update_layout(
+                height=380, barmode="stack",
                 plot_bgcolor=T["plot_bg"], paper_bgcolor=T["plot_bg"],
                 font_color=T["text"],
-                yaxis=dict(range=[0,100], gridcolor=T["grid_line"]),
+                yaxis=dict(range=[0, 105], gridcolor=T["grid_line"], title="난이도"),
                 xaxis=dict(gridcolor=T["grid_line"]),
-                margin=dict(l=10,r=10,t=10,b=10))
+                legend=dict(orientation="h", y=1.12, bgcolor="rgba(0,0,0,0)"),
+                margin=dict(l=10, r=10, t=40, b=10),
+            )
             st.plotly_chart(fig3, use_container_width=True)
-            st.dataframe(zdf, use_container_width=True)
+
+            # 표 (raw 값 포함)
+            show_cols = ["구간", "판 모양 (raw)", "게임 진행 (raw)", "통합 평균", "목표(target)"]
+            st.dataframe(zdf[show_cols].rename(columns={
+                "판 모양 (raw)": f"판 모양 ({w_b}%)",
+                "게임 진행 (raw)": f"게임 진행 ({w_g}%)",
+            }), use_container_width=True)
 
 
 # ══════════════════════════════════════════════════════
@@ -1340,7 +1411,7 @@ elif page == "🎲 4. JSON 생성기":
     st.title("🎲 JSON 생성기")
     st.caption("난이도 곡선 기반으로 레벨 범위를 선택해 JSON 파일을 생성하고 다운로드합니다.")
 
-    from generate_levels import generate_range_zip, target_diff as calc_diff
+    from generate_levels import generate_range_zip, difficulty as calc_diff
 
     tbl = st.session_state.tbl_df
 
@@ -1407,7 +1478,8 @@ elif page == "🎲 4. JSON 생성기":
                 'hard':      ('어려움',   '🟠'),
                 'very_hard': ('매우어려움','🔴'),
             }
-            def on_progress(done, total, lv_now=0, bs=0, ss=0, intg=0):
+            def on_progress(done, total):
+                lv_now  = start_lv + done - 1
                 diff_now = calc_diff(lv_now)
                 g = ('very_easy' if diff_now < 25 else
                      'easy'      if diff_now < 45 else
