@@ -652,27 +652,36 @@ if page == "🏠 홈":
     # ── 페이지 애니메이션 wrapper
     st.markdown('<div class="page-anim">', unsafe_allow_html=True)
 
-    # ── 히어로 섹션
-    bg_url    = f"{GITHUB_RAW_BASE}/assets/images/BG.png"
-    icon_url  = f"{GITHUB_RAW_BASE}/assets/images/Icon.png"
-    title_url = f"{GITHUB_RAW_BASE}/assets/images/Title.png"
-    logo_url  = f"{GITHUB_RAW_BASE}/assets/images/Logo.png"
+    # ── 이미지 base64 로더
+    def img_to_b64(filename):
+        p = BASE / "assets" / "images" / filename
+        if p.exists():
+            import base64 as _b64
+            return "data:image/png;base64," + _b64.b64encode(p.read_bytes()).decode()
+        return f"{GITHUB_RAW_BASE}/assets/images/{quote(filename)}"
 
+    bg_src    = img_to_b64("BG.png")
+    icon_src  = img_to_b64("Icon.png")
+    logo_src  = img_to_b64("Logo.png")
+    title_src = img_to_b64("Title.png")
+
+    # ── 히어로 섹션
     st.markdown(f"""
-<div style="position:relative;border-radius:20px;overflow:hidden;margin-bottom:24px;box-shadow:0 8px 32px rgba(107,58,42,0.18);">
-  <img src="{bg_url}" style="width:100%;max-height:280px;object-fit:cover;display:block;"
-       onerror="this.style.background='#D4956A';this.style.minHeight='200px'">
+<div style="position:relative;border-radius:20px;overflow:hidden;margin-bottom:24px;
+            box-shadow:0 8px 32px rgba(107,58,42,0.20);">
+  <img src="{bg_src}" style="width:100%;height:260px;object-fit:cover;display:block;">
   <div style="position:absolute;top:0;left:0;right:0;bottom:0;
-              background:linear-gradient(135deg,rgba(107,58,42,0.65),rgba(139,90,58,0.40));
+              background:linear-gradient(120deg,rgba(44,24,16,0.55) 0%,rgba(107,58,42,0.25) 100%);
               display:flex;align-items:center;padding:28px 36px;gap:24px;">
-    <img src="{icon_url}" style="height:90px;border-radius:16px;box-shadow:0 4px 12px rgba(0,0,0,0.3);"
-         onerror="this.style.display='none'">
+    <img src="{icon_src}" style="height:88px;border-radius:18px;
+         box-shadow:0 4px 16px rgba(0,0,0,0.35);flex-shrink:0;">
     <div style="flex:1;">
-      <img src="{title_url}" style="height:52px;margin-bottom:10px;display:block;filter:drop-shadow(0 2px 4px rgba(0,0,0,0.3));"
-           onerror="this.style.display='none'">
-      <img src="{logo_url}" style="height:28px;display:block;opacity:0.92;filter:drop-shadow(0 1px 3px rgba(0,0,0,0.2));"
-           onerror="this.style.display='none'">
-      <p style="color:#FBF5EE;font-size:13px;margin-top:10px;opacity:0.9;">
+      <img src="{logo_src}" style="height:52px;display:block;margin-bottom:10px;
+           filter:drop-shadow(0 2px 6px rgba(0,0,0,0.4));">
+      <img src="{title_src}" style="height:30px;display:block;
+           filter:drop-shadow(0 1px 4px rgba(0,0,0,0.3));opacity:0.95;">
+      <p style="color:#FBF5EE;font-size:13px;margin:10px 0 0 0;
+                text-shadow:0 1px 3px rgba(0,0,0,0.5);">
         헥사소트 퍼즐 레벨 난이도 설계 자동화 시스템
       </p>
     </div>
@@ -685,9 +694,9 @@ if page == "🏠 홈":
     m1.metric("퍼즐 레벨", "500개")
     m2.metric("시장 데이터", "Lv 1~100")
     m3.metric("난이도 지표", "15개 (H1)")
-    m4.metric("출시 목표", "2026. 10")
-
+    m4.metric("출시 목표", "2025. 9")
     st.markdown('<hr style="border-color:#E8D5C0;margin:24px 0;">', unsafe_allow_html=True)
+
 
     # ── 게임 플레이 영상
     st.markdown('<div class="section-header">🎮 게임 플레이 영상</div>', unsafe_allow_html=True)
@@ -739,14 +748,13 @@ if page == "🏠 홈":
             img_name = imgs[idx]
             img_path = img_paths[idx]
             delay = f"{0.1 + idx*0.07:.2f}s"
-            img_url = f"{GITHUB_RAW_BASE}/assets/images/{quote(img_name)}"
+            img_src = img_to_b64(img_name)
             with c:
                 st.markdown(
                     f'''<div class="intro-card" style="animation-delay:{delay};">
                     <div class="intro-num">{idx+1} / 18</div>
-                    <img src="{img_url}" alt="게임 소개 {idx+1}"
-                         style="width:100%;display:block;"
-                         onerror="this.parentElement.style.display='none'">
+                    <img src="{img_src}" alt="게임 소개 {idx+1}"
+                         style="width:100%;display:block;border-radius:8px;">
                     </div>''',
                     unsafe_allow_html=True
                 )
