@@ -705,7 +705,6 @@ if page == "🏠 홈":
     bg_src    = img_to_b64("BG.png")
     icon_src  = img_to_b64("Icon.png")
     logo_src  = img_to_b64("Logo.png")
-    title_src = img_to_b64("Title.png")
 
     # ── 히어로 섹션
     st.markdown(f"""
@@ -720,8 +719,7 @@ if page == "🏠 홈":
     <div style="flex:1;">
       <img src="{logo_src}" style="height:52px;display:block;margin-bottom:10px;
            filter:drop-shadow(0 2px 6px rgba(0,0,0,0.4));">
-      <img src="{title_src}" style="height:30px;display:block;
-           filter:drop-shadow(0 1px 4px rgba(0,0,0,0.3));opacity:0.95;">
+
       <p style="color:#FBF5EE;font-size:13px;margin:10px 0 0 0;
                 text-shadow:0 1px 3px rgba(0,0,0,0.5);">
         {"Hexasort Puzzle Level Difficulty Design System" if IS_EN else "헥사소트 퍼즐 레벨 난이도 설계 자동화 시스템"}
@@ -922,12 +920,12 @@ from which an **exponential convergence difficulty curve formula** was derived.
     st.markdown("## Tab Guide" if IS_EN else "## 탭 안내")
     cols = st.columns(2)
     tabs_info = [
-        ("📖 1. 매뉴얼", "지금 보고 계신 페이지입니다. 전체 흐름, 용어, 파일 구조를 안내합니다."),
-        ("📊 2. 난이도 분석", "시장 데이터 원본 테이블 + 우리 게임 통합 난이도 곡선 비교. 판모양/게임진행 가중치 조정 가능."),
-        ("🗺️ 3. 판 모양 뷰어", "레벨 JSON을 헥사 그리드로 시각화. 편집 모드에서 타일 수정 후 JSON 저장. 실시간 난이도 점수 표시."),
-        ("🎲 4. JSON 생성기", "레벨 범위 입력 -> 난이도 곡선 미리보기 -> 생성 -> 실시간 진행 표시 -> zip 다운로드."),
-        ("🔧 5. 설정", "H1 지표별 가중치(%) 조정 및 tblStage 스택 파라미터 직접 수정."),
-        ("🗄️ 6. 아카이브", "설정값을 버전으로 저장하고 GitHub에 자동 커밋. 버전 간 비교 가능."),
+        ("📖 1. Manual" if IS_EN else "📖 1. 매뉴얼", "Overview, glossary, and file structure." if IS_EN else "지금 보고 계신 페이지입니다. 전체 흐름, 용어, 파일 구조를 안내합니다."),
+        ("📊 2. Difficulty Analysis" if IS_EN else "📊 2. 난이도 분석", "Market data + integrated difficulty curve. Adjust board/gameplay weights." if IS_EN else "시장 데이터 원본 테이블 + 우리 게임 통합 난이도 곡선 비교. 판모양/게임진행 가중치 조정 가능."),
+        ("🗺️ 3. Board Viewer" if IS_EN else "🗺️ 3. 판 모양 뷰어", "Visualize JSON as hex grid. Edit tiles, save JSON, live difficulty score." if IS_EN else "레벨 JSON을 헥사 그리드로 시각화. 편집 모드에서 타일 수정 후 JSON 저장. 실시간 난이도 점수 표시."),
+        ("🎲 4. JSON Generator" if IS_EN else "🎲 4. JSON 생성기", "Select range → preview curve → generate → download ZIP." if IS_EN else "레벨 범위 입력 -> 난이도 곡선 미리보기 -> 생성 -> 실시간 진행 표시 -> zip 다운로드."),
+        ("🔧 5. Settings" if IS_EN else "🔧 5. 설정", "Adjust H1 and tblStage weights. Edit stack parameters." if IS_EN else "H1 지표별 가중치(%) 조정 및 tblStage 스택 파라미터 직접 수정."),
+        ("🗄️ 6. Archive" if IS_EN else "🗄️ 6. 아카이브", "Save settings as versions, auto-commit to GitHub." if IS_EN else "설정값을 버전으로 저장하고 GitHub에 자동 커밋. 버전 간 비교 가능."),
     ]
     for i, (name, desc) in enumerate(tabs_info):
         with cols[i%2]:
@@ -939,7 +937,21 @@ from which an **exponential convergence difficulty curve formula** was derived.
 
     st.markdown("---")
     st.markdown("## File Structure" if IS_EN else "## 파일 구조")
-    st.markdown("""
+    if IS_EN:
+        st.markdown("""
+| File | Location | Description |
+|---|---|---|
+| `market_lv1_100.csv` | `data/market/` | Market game Lv 1~100 H1 data (built-in) |
+| `tblStage_500.xlsx` | `data/` | 500-stage gameplay parameters |
+| `N_001.json` ~ `N_500.json` | `data/levels/` | Board layout JSON per level |
+| `integrated_difficulty.csv` | `data/` | Integrated difficulty scores per level |
+| `generate_levels.py` | root | Auto-generation script for JSON + tblStage |
+| `level_analyzer_v2.py` | root | JSON → H1 indicator extractor |
+
+> Market data CSV is built-in — no upload needed.
+        """)
+    else:
+        st.markdown("""
 | 파일 | 위치 | 설명 |
 |---|---|---|
 | `market_lv1_100.csv` | `data/market/` | 시장 게임 Lv 1~100 H1 실측값 (기본 내장) |
@@ -950,11 +962,27 @@ from which an **exponential convergence difficulty curve formula** was derived.
 | `level_analyzer_v2.py` | 루트 | JSON → H1 지표 추출 파서 |
 
 > 시장 데이터 CSV는 앱에 기본 내장되어 있어 별도 업로드 없이 사용 가능합니다.
-    """)
+        """)
 
     st.markdown("---")
     st.markdown("## How to Update JSONs" if IS_EN else "## JSON 업데이트 방법")
-    st.markdown("""
+    if IS_EN:
+        st.markdown("""
+**Method A — Generate in App (Recommended)**
+1. Go to `🎲 4. JSON Generator` tab
+2. Select level range with slider
+3. Preview difficulty curve
+4. Click **Generate** → check real-time difficulty per level
+5. **Download ZIP**
+6. Upload to GitHub `data/levels/` (overwrite)
+
+**Method B — Edit Individual Levels**
+1. `🗺️ 3. Board Viewer` → select level
+2. Turn on Edit Mode → modify tiles
+3. Save JSON → replace only that file on GitHub
+        """)
+    else:
+        st.markdown("""
 **방법 A — 앱에서 직접 생성 (추천)**
 1. `🎲 4. JSON 생성기` 탭으로 이동
 2. 레벨 범위 슬라이더로 생성할 구간 선택
@@ -967,13 +995,28 @@ from which an **exponential convergence difficulty curve formula** was derived.
 1. `🗺️ 3. 판 모양 뷰어` → 레벨 선택
 2. 편집 모드 ON → 타일 수정
 3. JSON 저장 → GitHub에 해당 파일만 교체
-    """)
+        """)
 
     st.markdown("---")
     st.markdown("## Glossary" if IS_EN else "## 용어 사전")
 
-    with st.expander("TileType — 셀 종류"):
-        st.markdown("""
+    with st.expander("TileType — Cell Types" if IS_EN else "TileType — 셀 종류"):
+        if IS_EN:
+            st.markdown("""
+| Code | Name | Description | Unlock Level |
+|---|---|---|---|
+| 0 | Normal | Empty cell where players place stacks | Lv 1~ |
+| 1 | Blank | Inactive cell (outside grid) | — |
+| 2 | Stack | Cell with pre-stacked chips | Lv 1~ |
+| 3 | Lock | Locked cell — unlocked by Level score | Lv 9~ |
+| 4 | Plank | Wood plank — destroyed by Level score | Lv 59~ |
+| 5 | Ice | Ice — unlocked by UnlockLevel, includes stack | Lv 179~ |
+| 6 | StackLock | Locked stack — unlocked by UnlockLevel | Lv 29~ |
+| 7 | Grass | Grass — removed when sorted from above | Lv 299~ |
+| 8 | Ads | Ad tile — watch ad to gain empty cell | Lv 49~ |
+            """)
+        else:
+            st.markdown("""
 | 코드 | 이름 | 설명 | 등장 레벨 |
 |---|---|---|---|
 | 0 | Normal | 플레이어가 스택을 놓는 일반 빈 칸 | Lv 1~ |
@@ -985,9 +1028,9 @@ from which an **exponential convergence difficulty curve formula** was derived.
 | 6 | StackLock | 잠긴 스택 — UnlockLevel 달성 시 해제 | Lv 29~ |
 | 7 | Grass | 잔디 — 위에서 소팅 시 제거 | Lv 299~ |
 | 8 | Ads | 광고 — 시청 시 빈 칸 획득 | Lv 49~ |
-        """)
+            """)
 
-    with st.expander("H1 지표 — 판 모양 난이도 수치"):
+    with st.expander("H1 Indicators — Board Difficulty Metrics" if IS_EN else "H1 지표 — 판 모양 난이도 수치"):
         st.markdown("""
 시장 데이터 min/max로 정규화 후 가중치 합산 → board_score (0~100점)
 
@@ -1010,7 +1053,7 @@ from which an **exponential convergence difficulty curve formula** was derived.
 | H1-15 | 기믹 열린 변 합 (Plank/Ice/Grass/Camera) | 낮을수록 어려움 |
         """)
 
-    with st.expander("tblStage 파라미터"):
+    with st.expander("tblStage Parameters" if IS_EN else "tblStage 파라미터"):
         st.markdown("""
 | 파라미터 | 설명 |
 |---|---|
@@ -1022,7 +1065,7 @@ from which an **exponential convergence difficulty curve formula** was derived.
 | NewColorsMilestones | 임계값 도달 시 추가되는 색상. InitialAvailableColors와 중복 불가 |
         """)
 
-    with st.expander("칩 색상 코드"):
+    with st.expander("Chip Color Codes" if IS_EN else "칩 색상 코드"):
         cols2 = st.columns(4)
         chip_info = [(0,'🔵 Blue','#1890FF'),(1,'🟡 Yellow','#FADB14'),
                      (2,'🔴 Red','#F5222D'),(3,'🟢 Green','#52C41A'),
@@ -1031,8 +1074,19 @@ from which an **exponential convergence difficulty curve formula** was derived.
         for i,(code,name,_) in enumerate(chip_info):
             cols2[i%4].markdown(f"**{code}** — {name}")
 
-    with st.expander("난이도 등급"):
-        st.markdown("""
+    with st.expander("Difficulty Grades" if IS_EN else "난이도 등급"):
+        if IS_EN:
+            st.markdown("""
+| Score | Grade | Color |
+|---|---|---|
+| 0~25 | Very Easy | 🔵 Blue |
+| 25~45 | Easy | 🟢 Green |
+| 45~60 | Normal | 🟡 Yellow |
+| 60~75 | Hard | 🟠 Orange |
+| 75+ | Very Hard | 🔴 Red |
+            """)
+        else:
+            st.markdown("""
 | 점수 | 등급 | 색상 |
 |---|---|---|
 | 0~25 | 매우쉬움 | 🔵 파랑 |
@@ -1040,9 +1094,9 @@ from which an **exponential convergence difficulty curve formula** was derived.
 | 45~60 | 보통 | 🟡 노랑 |
 | 60~75 | 어려움 | 🟠 주황 |
 | 75+ | 매우어려움 | 🔴 빨강 |
-        """)
+            """)
 
-    with st.expander("난이도 곡선 공식"):
+    with st.expander("Difficulty Curve Formula" if IS_EN else "난이도 곡선 공식"):
         st.markdown("""
 **시장 게임 Lv 1~100 데이터 분석으로 도출 (SKKU 게임센터 랩)**
 
@@ -1128,7 +1182,7 @@ elif page == "📊 2. 난이도 분석":
     # ── 차트 표시 옵션
     st.markdown("**표시할 곡선 선택**")
     oc1, oc2, oc3, oc4, oc5 = st.columns(5)
-    show_target   = oc1.checkbox("게임 진행 목표", True)
+    show_target   = oc1.checkbox("Stack Difficulty" if IS_EN else "스택 난이도", True)
     show_market   = oc2.checkbox("시장 board", True)
     show_our_intg = oc3.checkbox("우리 통합", True)
     show_our_board= oc4.checkbox("우리 board (정규화)", False)
@@ -1142,14 +1196,14 @@ elif page == "📊 2. 난이도 분석":
     n_all  = np.arange(1, 501)
     fig = go.Figure()
 
-    # 게임 진행 목표
+    # 스택 난이도
     if show_target:
         fig.add_trace(go.Scatter(
             x=n_all, y=baseline_curve(n_all), name="기준선 baseline(N)",
             line=dict(color="#58a6ff", width=1.5, dash="dot"), opacity=0.6
         ))
         fig.add_trace(go.Scatter(
-            x=n_all, y=target_curve(n_all), name="게임 진행 목표",
+            x=n_all, y=target_curve(n_all), name="스택 난이도",
             line=dict(color="#58a6ff", width=2), opacity=0.9
         ))
 
@@ -1311,9 +1365,9 @@ elif page == "📊 2. 난이도 분석":
                     "Zone" if IS_EN else "구간": label,
                     "판 모양 기여": board_contrib,
                     "게임 진행 기여": gameplay_contrib,
-                    "통합 평균": integrated_avg,
-                    "판 모양 (raw)": round(s2["board_score"].mean(), 1),
-                    "게임 진행 (raw)": round(s2["gameplay_score"].mean(), 1),
+                    "Integrated Avg" if IS_EN else "통합 평균": integrated_avg,
+                    "Board (raw)": round(s2["board_score"].mean(), 1),
+                    "Gameplay (raw)": round(s2["gameplay_score"].mean(), 1),
                 })
             zdf = pd.DataFrame(zones)
 
@@ -1327,7 +1381,7 @@ elif page == "📊 2. 난이도 분석":
             for i in range(0, len(intg), zone_size):
                 lo = i+1; hi = min(i+zone_size, len(intg))
                 target_avgs.append(round(sum(tgt(n) for n in range(lo, hi+1))/(hi-lo+1), 1))
-            zdf["게임 진행 목표"] = target_avgs
+            zdf["스택 난이도"] = target_avgs
 
             fig3 = go.Figure()
 
@@ -1351,18 +1405,18 @@ elif page == "📊 2. 난이도 분석":
             ))
             # 통합 평균 꺾은선
             fig3.add_trace(go.Scatter(
-                x=zdf["Zone" if IS_EN else "구간"], y=zdf["통합 평균"],
+                x=zdf["Zone" if IS_EN else "구간"], y=zdf["Integrated Avg" if IS_EN else "통합 평균"],
                 name="통합 난이도", mode="lines+markers+text",
                 line=dict(color="#3fb950", width=2.5),
                 marker=dict(size=7, color="#3fb950"),
-                text=zdf["통합 평균"].apply(lambda v: f"{v:.1f}"),
+                text=zdf["Integrated Avg" if IS_EN else "통합 평균"].apply(lambda v: f"{v:.1f}"),
                 textposition="top center",
                 textfont=dict(size=10, color="#3fb950"),
             ))
             # target(N) 기준선
             fig3.add_trace(go.Scatter(
-                x=zdf["Zone" if IS_EN else "구간"], y=zdf["게임 진행 목표"],
-                name="게임 진행 목표", mode="lines+markers",
+                x=zdf["Zone" if IS_EN else "구간"], y=zdf["스택 난이도"],
+                name="스택 난이도", mode="lines+markers",
                 line=dict(color="#f5222d", width=1.5, dash="dot"),
                 marker=dict(size=5, color="#f5222d"),
             ))
@@ -1379,10 +1433,10 @@ elif page == "📊 2. 난이도 분석":
             st.plotly_chart(fig3, use_container_width=True)
 
             # 표 (raw 값 포함)
-            show_cols = ["Zone" if IS_EN else "구간", "판 모양 (raw)", "게임 진행 (raw)", "통합 평균", "게임 진행 목표"]
+            show_cols = ["Zone" if IS_EN else "구간", "Board (raw)", "Gameplay (raw)", "Integrated Avg" if IS_EN else "통합 평균", "스택 난이도"]
             st.dataframe(zdf[show_cols].rename(columns={
-                "판 모양 (raw)": f"판 모양 ({w_b}%)",
-                "게임 진행 (raw)": f"게임 진행 ({w_g}%)",
+                "Board (raw)": f"판 모양 ({w_b}%)",
+                "Gameplay (raw)": f"게임 진행 ({w_g}%)",
             }), use_container_width=True)
 
 
@@ -1438,11 +1492,11 @@ elif page == "🗺️ 3. 판 모양 뷰어":
 
                 h1 = analyze_level(data)
                 st.markdown(f"**보드**: {data['XCells']}×{data['YCells']}")
-                with st.expander("타일 구성"):
+                with st.expander("Tile Composition" if IS_EN else "타일 구성"):
                     for k,v in h1['tile_counts'].items():
                         if v>0 and k!='Blank':
                             st.markdown(f"- {k}: {v}개")
-                with st.expander("H1 지표"):
+                with st.expander("H1 Indicators" if IS_EN else "H1 지표"):
                     for k in ['H1_1','H1_2','H1_3','H1_5','H1_6','H1_7','H1_9','H1_12','H1_14']:
                         st.markdown(f"**{k}**: {h1[k]}")
                 h1e = {k:v for k,v in h1.items() if k!='tile_counts'}
@@ -1451,7 +1505,7 @@ elif page == "🗺️ 3. 판 모양 뷰어":
                                    "h1_metrics.csv", "text/csv", use_container_width=True)
 
             show_coord = st.checkbox("좌표 표시", False)
-            show_chips = st.checkbox("칩 색상 표시", True)
+            show_chips = st.checkbox("Show Chip Colors" if IS_EN else "칩 색상 표시", True)
             hex_size   = st.slider("헥사 크기", 20, 60, 38)
 
         with vc2:
@@ -1594,7 +1648,7 @@ elif page == "🗺️ 3. 판 모양 뷰어":
 
         with icol:
             # ── 셀 선택
-            st.markdown("### 📍 셀 선택")
+            st.markdown("### 📍 Cell Selection" if IS_EN else "### 📍 셀 선택")
             sel_y = st.number_input("행 (Y, 위→아래)", 0, Y_e-1, 0, key="sel_y")
             sel_x = st.number_input("열 (X, 좌→우)",  0, X_e-1, 0, key="sel_x")
 
@@ -1604,7 +1658,7 @@ elif page == "🗺️ 3. 판 모양 뷰어":
             st.markdown("---")
 
             # ── 현재 셀 정보 표시
-            st.markdown("### 🔍 현재 셀 정보")
+            st.markdown("### 🔍 Current Cell Info" if IS_EN else "### 🔍 현재 셀 정보")
             tile_color = HEX_COLORS.get(cur_type, '#CCC')
             st.markdown(
                 f'<div style="background:{tile_color};border-radius:8px;'
@@ -1643,7 +1697,7 @@ elif page == "🗺️ 3. 판 모양 뷰어":
             st.markdown("---")
 
             # ── 셀 편집
-            st.markdown("### ✏️ 셀 편집")
+            st.markdown("### ✏️ Cell Edit" if IS_EN else "### ✏️ 셀 편집")
             new_type = st.selectbox("TileType", [
                 'Normal','Blank','Stack','Lock','Plank',
                 'Ice','StackLock','Grass','Ads','CameraPicture'
@@ -1652,7 +1706,7 @@ elif page == "🗺️ 3. 판 모양 뷰어":
             new_stacks, lv_val, ul_val = [], 0, 0
 
             if new_type in ('Stack', 'StackLock', 'Ice'):
-                st.markdown("**칩 색상** (0~7, 콤마구분)")
+                st.markdown("**Chip Colors** (0~7, comma-separated)" if IS_EN else "**칩 색상** (0~7, 콤마구분)")
                 # 색상 참조표
                 st.markdown(
                     "".join([
@@ -1704,7 +1758,7 @@ elif page == "🗺️ 3. 판 모양 뷰어":
 
             st.markdown("---")
             # ── JSON 저장
-            st.markdown("### 💾 저장")
+            st.markdown("### 💾 Save" if IS_EN else "### 💾 저장")
             fname = st.text_input("파일명", "N_001.json", key="edit_fname")
             json_out = json.dumps({
                 "Timestamp": int(datetime.now().timestamp()*1000),
@@ -2044,7 +2098,7 @@ elif page == "🔧 5. 설정":
             fig_prev.add_trace(go.Scatter(x=list(range(1,len(intg)+1)),y=custom_sm.tolist(),
                 name='통합 이동평균',line=dict(color='#3fb950',width=2)))
             fig_prev.add_trace(go.Scatter(x=np.arange(1,501),y=target_curve(np.arange(1,501)),
-                name='게임 진행 목표',line=dict(color='#58a6ff',width=1.5,dash='dash'),opacity=0.6))
+                name='스택 난이도',line=dict(color='#58a6ff',width=1.5,dash='dash'),opacity=0.6))
             fig_prev.update_layout(height=280,plot_bgcolor=T["plot_bg"],paper_bgcolor=T["plot_bg"],
                 font_color=T["text"],xaxis_title='레벨',
                 xaxis=dict(gridcolor=T["grid_line"]),yaxis=dict(range=[0,105],gridcolor=T["grid_line"]),
@@ -2081,7 +2135,7 @@ elif page == "🔧 5. 설정":
             }
 
         tw_s = sum(st.session_state.stack_weights.values())
-        st.markdown(f"**현재 총합**: {tw_s}pt")
+        st.markdown(f"**{"Total weight" if IS_EN else "현재 총합"}**: {tw_s}pt")
 
         sc1, sc2 = st.columns(2)
         for i, (key, label, inv, mn, mx) in enumerate(STACK_INFO):
@@ -2113,7 +2167,7 @@ elif page == "🔧 5. 설정":
         intg = st.session_state.intg_df
         tbl_s = st.session_state.tbl_df
         if intg is not None and tbl_s is not None:
-            st.markdown("**가중치 적용 시 gameplay_score 미리보기**")
+            st.markdown("**gameplay_score Preview with Current Weights**" if IS_EN else "**가중치 적용 시 gameplay_score 미리보기**")
 
             def parse_avg(v):
                 try: return float(str(v).split(',')[0])
@@ -2157,7 +2211,7 @@ elif page == "🔧 5. 설정":
             ))
             fig_gs.add_trace(go.Scatter(
                 x=np.arange(1,501), y=target_curve(np.arange(1,501)),
-                name='게임 진행 목표',
+                name='스택 난이도',
                 line=dict(color='#f5222d', width=1.5, dash='dot'), opacity=0.7
             ))
             fig_gs.update_layout(
