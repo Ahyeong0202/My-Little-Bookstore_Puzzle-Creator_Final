@@ -696,8 +696,6 @@ if page == "🏠 홈":
     <div style="flex:1;">
       <img src="{logo_src}" style="height:52px;display:block;margin-bottom:10px;
            filter:drop-shadow(0 2px 6px rgba(0,0,0,0.4));">
-      <img src="{title_src}" style="height:30px;display:block;
-           filter:drop-shadow(0 1px 4px rgba(0,0,0,0.3));opacity:0.95;">
       <p style="color:#FBF5EE;font-size:13px;margin:10px 0 0 0;
                 text-shadow:0 1px 3px rgba(0,0,0,0.5);">
         헥사소트 퍼즐 레벨 난이도 설계 자동화 시스템
