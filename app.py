@@ -277,10 +277,25 @@ hr { border-color: #E8D5C0; }
 /* ── 코드 블록 */
 [data-testid="stCode"] { background: #F0E6D8 !important; color: #2C1810 !important; }
 [data-testid="stCode"] * { color: #2C1810 !important; }
+[data-testid="stCode"] pre { background: #F0E6D8 !important; color: #2C1810 !important; }
+[data-testid="stCode"] code { background: #F0E6D8 !important; color: #2C1810 !important; }
+[data-testid="stCodeBlock"] { background: #F0E6D8 !important; }
+[data-testid="stCodeBlock"] * { color: #2C1810 !important; background: #F0E6D8 !important; }
+pre[class*="language-"] { background: #F0E6D8 !important; color: #2C1810 !important; }
+code[class*="language-"] { background: #F0E6D8 !important; color: #2C1810 !important; }
 
 /* ── alert/warning/info 텍스트 */
 [data-testid="stAlert"] { background: #FBF5EE !important; border-radius: 8px; }
 [data-testid="stAlert"] p, [data-testid="stAlert"] * { color: #2C1810 !important; }
+
+/* ── ... 툴바 메뉴 (Rerun/Clear cache 등) */
+[data-testid="stMainMenuPopover"],
+[data-testid="stMainMenuPopover"] *,
+[data-testid="stMainMenuPopover"] li,
+[data-testid="stMainMenuPopover"] span,
+[data-testid="stMainMenuPopover"] p,
+[data-baseweb="popover"] [role="menuitem"],
+[data-baseweb="popover"] [role="menuitem"] * { color: #FFFFFF !important; }
 
 /* ── 전역: 옅은 회색 글씨 → 다크 브라운으로 강제 */
 p, span, div, label, li, td, th, small {
@@ -646,6 +661,9 @@ with st.sidebar:
 # ══════════════════════════════════════════════════════
 # 탭 0 — 홈
 # ══════════════════════════════════════════════════════
+LANG = st.session_state.get("lang","한국어")
+IS_EN = (LANG == "English")
+
 if page == "🏠 홈":
     GITHUB_RAW_BASE = f"https://raw.githubusercontent.com/{GITHUB_REPO}/main"
 
@@ -676,8 +694,10 @@ if page == "🏠 홈":
     <img src="{icon_src}" style="height:88px;border-radius:18px;
          box-shadow:0 4px 16px rgba(0,0,0,0.35);flex-shrink:0;">
     <div style="flex:1;">
-    <img src="{logo_src}" style="height:80px;display:block;margin-bottom:10px;
+      <img src="{logo_src}" style="height:52px;display:block;margin-bottom:10px;
            filter:drop-shadow(0 2px 6px rgba(0,0,0,0.4));">
+      <img src="{title_src}" style="height:30px;display:block;
+           filter:drop-shadow(0 1px 4px rgba(0,0,0,0.3));opacity:0.95;">
       <p style="color:#FBF5EE;font-size:13px;margin:10px 0 0 0;
                 text-shadow:0 1px 3px rgba(0,0,0,0.5);">
         헥사소트 퍼즐 레벨 난이도 설계 자동화 시스템
@@ -692,7 +712,7 @@ if page == "🏠 홈":
     m1.metric("퍼즐 레벨", "500개")
     m2.metric("시장 데이터", "Lv 1~100")
     m3.metric("난이도 지표", "15개 (H1)")
-    m4.metric("출시 목표", "2025. 9")
+    m4.metric("출시 목표", "2026. 10")
     st.markdown('<hr style="border-color:#E8D5C0;margin:24px 0;">', unsafe_allow_html=True)
 
 
@@ -763,8 +783,8 @@ if page == "🏠 홈":
 # 탭 1 — 매뉴얼
 # ══════════════════════════════════════════════════════
 if page == "📖 1. 매뉴얼":
-    st.title("📖 Puzzle Creator 사용 매뉴얼")
-    st.caption("My Little Bookstore — 헥사소트 퍼즐 레벨 난이도 설계 & 분석 도구")
+    st.title("📖 Puzzle Creator 사용 매뉴얼" if not IS_EN else "📖 Puzzle Creator User Manual")
+    st.caption("My Little Bookstore — 헥사소트 퍼즐 레벨 난이도 설계 & 분석 도구" if not IS_EN else "My Little Bookstore — Hexasort Puzzle Level Difficulty Design & Analysis Tool")
 
     st.markdown("---")
     st.markdown("## 이 앱은 무엇인가요?")
