@@ -618,7 +618,7 @@ with st.sidebar:
         else:
             st.markdown('<span class="file-badge-warn">⚠ 통합 난이도 없음</span>', unsafe_allow_html=True)
 
-    up_tbl = st.file_uploader("tblStage_500.xlsx" if IS_EN else "tblStage_500.xlsx", type=["xlsx"], key="up_tbl")
+    up_tbl = st.file_uploader("tblStage_500.xlsx", type=["xlsx"], key="up_tbl")
     if up_tbl:
         df_raw = pd.read_excel(up_tbl, sheet_name='Stage', header=0)
         mask = df_raw['LevelName'].str.startswith('N_', na=False) | df_raw['LevelName'].str.startswith('N ', na=False)
@@ -626,11 +626,11 @@ with st.sidebar:
         st.markdown('<span class="file-badge">✓ tblStage</span>', unsafe_allow_html=True)
     elif st.session_state.tbl_df is None:
         local = load_tbl_local()
-    if local is not None and not local.empty:
-        st.session_state.tbl_df = local
-        st.markdown(f'<span class="file-badge">✓ tblStage ({"GitHub" if IS_EN else "GitHub 자동 로드"})</span>', unsafe_allow_html=True)
-    else:
-        st.markdown(f'<span class="file-badge-warn">{"⚠ No tblStage" if IS_EN else "⚠ tblStage 없음"}</span>', unsafe_allow_html=True)
+        if local is not None and not local.empty:
+            st.session_state.tbl_df = local
+            st.markdown(f'<span class="file-badge">✓ tblStage ({"GitHub" if IS_EN else "GitHub 자동 로드"})</span>', unsafe_allow_html=True)
+        else:
+            st.markdown(f'<span class="file-badge-warn">{"⚠ No tblStage" if IS_EN else "⚠ tblStage 없음"}</span>', unsafe_allow_html=True)
 
     up_market = st.file_uploader("Market Data CSV (Upload New)" if IS_EN else "시장 데이터 CSV (새로 업로드)", type=["csv"], key="up_market")
     if up_market:
