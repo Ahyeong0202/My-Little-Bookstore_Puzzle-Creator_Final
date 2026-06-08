@@ -12,12 +12,12 @@
       {
         "TileType": 2,
         "Stacks": [
-          2,
-          6,
-          0,
           1,
-          3,
-          1
+          2,
+          1,
+          2,
+          4,
+          2
         ]
       },
       {
@@ -35,23 +35,22 @@
         "TileType": 0
       },
       {
-        "TileType": 6,
-        "UnlockLevel": 94,
+        "TileType": 2,
         "Stacks": [
-          0,
+          1,
           4,
           4,
-          2,
-          1
+          1,
+          2
         ]
       },
       {
         "TileType": 6,
         "UnlockLevel": 40,
         "Stacks": [
-          3,
-          6,
-          6,
+          4,
+          2,
+          2,
           2
         ]
       },
@@ -85,10 +84,10 @@
         "TileType": 6,
         "UnlockLevel": 67,
         "Stacks": [
-          0,
-          6,
-          6,
-          2
+          2,
+          2,
+          2,
+          1
         ]
       },
       {

@@ -16,8 +16,7 @@
         "TileType": 0
       },
       {
-        "TileType": 3,
-        "Level": 60
+        "TileType": 0
       },
       {
         "TileType": 1
@@ -27,15 +26,23 @@
       {
         "TileType": 2,
         "Stacks": [
-          3,
-          5,
+          7,
+          1,
+          7,
           0,
-          2,
-          0
+          0,
+          1
         ]
       },
       {
-        "TileType": 0
+        "TileType": 2,
+        "Stacks": [
+          1,
+          1,
+          7,
+          0,
+          7
+        ]
       },
       {
         "TileType": 0
@@ -49,16 +56,18 @@
     ],
     [
       {
+        "TileType": 0
+      },
+      {
         "TileType": 6,
-        "UnlockLevel": 140,
+        "UnlockLevel": 100,
         "Stacks": [
-          5,
-          6,
-          0,
+          1,
           5,
           1,
-          2,
-          0
+          1,
+          0,
+          5
         ]
       },
       {
@@ -66,54 +75,43 @@
       },
       {
         "TileType": 0
+      },
+      {
+        "TileType": 0
+      }
+    ],
+    [
+      {
+        "TileType": 3,
+        "Level": 120
+      },
+      {
+        "TileType": 0
+      },
+      {
+        "TileType": 6,
+        "UnlockLevel": 100,
+        "Stacks": [
+          5,
+          1,
+          0,
+          7,
+          0,
+          5
+        ]
       },
       {
         "TileType": 6,
         "UnlockLevel": 60,
         "Stacks": [
-          5,
-          2,
-          4,
-          1,
-          5,
-          2,
-          1
-        ]
-      },
-      {
-        "TileType": 6,
-        "UnlockLevel": 140,
-        "Stacks": [
-          1,
-          5,
-          2,
-          4,
           0,
-          2,
-          0
+          5,
+          0,
+          5,
+          1,
+          5,
+          7
         ]
-      }
-    ],
-    [
-      {
-        "TileType": 0
-      },
-      {
-        "TileType": 0
-      },
-      {
-        "TileType": 2,
-        "Stacks": [
-          2,
-          4,
-          3,
-          3,
-          3,
-          1
-        ]
-      },
-      {
-        "TileType": 0
       },
       {
         "TileType": 1

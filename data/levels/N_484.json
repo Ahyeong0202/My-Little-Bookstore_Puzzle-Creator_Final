@@ -54,17 +54,17 @@
         "UnlockLevel": 37,
         "Stacks": [
           1,
-          4,
-          2
+          1,
+          5
         ]
       },
       {
-        "TileType": 6,
-        "UnlockLevel": 37,
+        "TileType": 2,
         "Stacks": [
-          2,
           1,
-          2
+          5,
+          6,
+          6
         ]
       }
     ],
@@ -74,15 +74,16 @@
       },
       {
         "TileType": 3,
-        "Level": 37
+        "Level": 75
       },
       {
         "TileType": 6,
         "UnlockLevel": 62,
         "Stacks": [
+          5,
+          5,
           1,
-          4,
-          0
+          5
         ]
       },
       {

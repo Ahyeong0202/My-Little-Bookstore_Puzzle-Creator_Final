@@ -32,19 +32,19 @@
       {
         "TileType": 2,
         "Stacks": [
-          3,
-          0,
+          2,
           1,
-          2
+          4,
+          5
         ]
       },
       {
         "TileType": 6,
         "UnlockLevel": 40,
         "Stacks": [
-          1,
+          4,
           6,
-          2
+          5
         ]
       },
       {

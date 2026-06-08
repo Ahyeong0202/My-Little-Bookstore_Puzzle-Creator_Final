@@ -45,12 +45,12 @@
       },
       {
         "TileType": 6,
-        "UnlockLevel": 65,
+        "UnlockLevel": 39,
         "Stacks": [
-          2,
-          6,
-          2,
-          1
+          5,
+          0,
+          5,
+          5
         ]
       },
       {
@@ -60,10 +60,10 @@
         "TileType": 6,
         "UnlockLevel": 39,
         "Stacks": [
-          1,
-          4,
-          1,
-          2
+          0,
+          0,
+          0,
+          0
         ]
       },
       {
@@ -72,21 +72,24 @@
     ],
     [
       {
-        "TileType": 2,
+        "TileType": 6,
+        "UnlockLevel": 91,
         "Stacks": [
-          6,
-          6,
-          4,
-          3,
-          1
+          7,
+          7,
+          7,
+          5,
+          0
         ]
       },
       {
         "TileType": 2,
         "Stacks": [
-          3,
-          3,
-          2
+          7,
+          0,
+          7,
+          0,
+          0
         ]
       },
       {

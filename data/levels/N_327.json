@@ -10,20 +10,57 @@
         "TileType": 1
       },
       {
-        "TileType": 0
+        "TileType": 6,
+        "UnlockLevel": 133,
+        "Stacks": [
+          7,
+          2,
+          0,
+          1,
+          7,
+          6,
+          1
+        ]
       },
       {
         "TileType": 1
+      },
+      {
+        "TileType": 6,
+        "UnlockLevel": 133,
+        "Stacks": [
+          0,
+          1,
+          0,
+          2,
+          6,
+          1
+        ]
+      },
+      {
+        "TileType": 1
+      }
+    ],
+    [
+      {
+        "TileType": 0
       },
       {
         "TileType": 2,
         "Stacks": [
+          7,
+          1,
+          6,
           2,
           0,
-          4,
-          0,
-          2
+          0
         ]
+      },
+      {
+        "TileType": 0
+      },
+      {
+        "TileType": 0
       },
       {
         "TileType": 1
@@ -33,29 +70,6 @@
       {
         "TileType": 0
       },
-      {
-        "TileType": 0
-      },
-      {
-        "TileType": 0
-      },
-      {
-        "TileType": 6,
-        "UnlockLevel": 57,
-        "Stacks": [
-          4,
-          3,
-          1,
-          1,
-          2,
-          2
-        ]
-      },
-      {
-        "TileType": 1
-      }
-    ],
-    [
       {
         "TileType": 0
       },
@@ -66,35 +80,10 @@
         "TileType": 6,
         "UnlockLevel": 133,
         "Stacks": [
-          3,
-          4,
-          4,
+          6,
           1,
-          2,
-          3,
-          2
-        ]
-      },
-      {
-        "TileType": 0
-      },
-      {
-        "TileType": 0
-      }
-    ],
-    [
-      {
-        "TileType": 1
-      },
-      {
-        "TileType": 2,
-        "Stacks": [
-          3,
-          2,
-          5,
-          2,
-          5,
-          0,
+          1,
+          1,
           0
         ]
       },
@@ -102,14 +91,25 @@
         "TileType": 6,
         "UnlockLevel": 133,
         "Stacks": [
+          7,
           2,
-          3,
           0,
           2,
-          5,
-          4,
-          0
+          7,
+          2,
+          7
         ]
+      }
+    ],
+    [
+      {
+        "TileType": 1
+      },
+      {
+        "TileType": 0
+      },
+      {
+        "TileType": 0
       },
       {
         "TileType": 0

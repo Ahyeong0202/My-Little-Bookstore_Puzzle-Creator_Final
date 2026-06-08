@@ -16,33 +16,6 @@
         "TileType": 0
       },
       {
-        "TileType": 6,
-        "UnlockLevel": 57,
-        "Stacks": [
-          6,
-          0,
-          4,
-          5,
-          5,
-          4,
-          2
-        ]
-      },
-      {
-        "TileType": 1
-      }
-    ],
-    [
-      {
-        "TileType": 0
-      },
-      {
-        "TileType": 0
-      },
-      {
-        "TileType": 0
-      },
-      {
         "TileType": 0
       },
       {
@@ -54,44 +27,69 @@
         "TileType": 0
       },
       {
+        "TileType": 0
+      },
+      {
         "TileType": 6,
-        "UnlockLevel": 133,
+        "UnlockLevel": 95,
         "Stacks": [
           3,
+          4,
+          5,
           1,
-          2,
-          5,
-          2,
-          5,
-          2
+          3,
+          4
         ]
+      },
+      {
+        "TileType": 6,
+        "UnlockLevel": 95,
+        "Stacks": [
+          5,
+          1,
+          1,
+          3,
+          3
+        ]
+      },
+      {
+        "TileType": 1
+      }
+    ],
+    [
+      {
+        "TileType": 0
+      },
+      {
+        "TileType": 0
       },
       {
         "TileType": 6,
         "UnlockLevel": 133,
         "Stacks": [
-          2,
-          4,
-          3,
-          2,
-          3,
-          2
-        ]
-      },
-      {
-        "TileType": 2,
-        "Stacks": [
-          3,
           4,
           4,
           0,
-          0,
-          6,
-          2
+          3,
+          4,
+          3
         ]
       },
       {
         "TileType": 0
+      },
+      {
+        "TileType": 6,
+        "UnlockLevel": 95,
+        "Stacks": [
+          1,
+          4,
+          0,
+          3,
+          5,
+          3,
+          3
+        ]
       }
     ],
     [
@@ -105,13 +103,16 @@
         "TileType": 1
       },
       {
-        "TileType": 2,
+        "TileType": 6,
+        "UnlockLevel": 95,
         "Stacks": [
-          5,
-          2,
-          6,
+          4,
+          0,
           3,
-          0
+          5,
+          0,
+          3,
+          5
         ]
       },
       {
