@@ -2231,7 +2231,14 @@ elif page == "🎲 4. JSON 생성기":
                     f"({done}/{total})"
                 )
 
-            df_n = tbl[tbl['LevelName'].str.startswith('N ', na=False)].reset_index(drop=True)
+            df_n = tbl[
+                tbl['LevelName'].str.startswith('N_', na=False) |
+                tbl['LevelName'].str.startswith('N ', na=False)
+            ].reset_index(drop=True)
+
+            if df_n.empty:
+                st.error("tblStage에서 N_ 레벨 데이터를 찾을 수 없어요. LevelName 컬럼을 확인해주세요.")
+                st.stop()
 
             zip_bytes = generate_range_zip(start_lv, end_lv, df_n, callback=on_progress)
 
