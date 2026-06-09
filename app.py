@@ -1894,7 +1894,7 @@ elif page == "🗺️ 3. 판 모양 뷰어":
             # 원시 JSON
             with st.expander("raw JSON"):
                 st.markdown(
-                    f'<pre style="background:#F0E6D8;color:#2C1810;padding:12px;'
+                    f'<pre style="background:#1a1a2e;color:#FFFFFF;padding:12px;'
                     f'border-radius:6px;font-size:12px;overflow-x:auto;">'
                     f'{json.dumps(cur_tile, ensure_ascii=False, indent=2)}'
                     f'</pre>',
