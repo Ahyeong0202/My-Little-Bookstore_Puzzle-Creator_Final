@@ -1808,7 +1808,10 @@ elif page == "🗺️ 3. 판 모양 뷰어":
                         if show_coord or edit_mode:
                             label = f"({y},{x})\n{label}"
 
-                        fig.add_trace(go.Scatter(x=hx,y=hy,fill='toself', ...))  # 기존 trace
+                        fig.add_trace(go.Scatter(x=hx, y=hy, fill='toself',
+                            fillcolor=fill_c,
+                            line=dict(color=border_c, width=border_w),
+                            mode='lines', hoverinfo='skip', showlegend=False))
 
                         fig.add_annotation(x=cx, y=cy, text=label, showarrow=False,
                             font=dict(size=9, color='white' if tt!=0 else '#333'), align='center')
