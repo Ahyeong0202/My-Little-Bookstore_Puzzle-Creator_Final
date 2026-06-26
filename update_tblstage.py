@@ -23,7 +23,7 @@ import re
 
 # generate_special 임포트 (같은 디렉토리)
 sys.path.insert(0, str(Path(__file__).parent))
-from generate_special import generate_special_puzzle, analyze_special
+from generate_special import generate_special_puzzle, analyze_special, _get_difficulty
 
 
 # ── 보상 공식 생성 (기존 패턴 유지)
@@ -99,17 +99,14 @@ def update_tblstage(
             print(f'  S_{pid:02d}: StackInfo Id={stack_id} 이미 존재 — 스킵')
             continue
 
-        # 난이도 파라미터 (TurnCount=3 고정 — Stack1~Stack3만 사용)
-        if   pid <= 10: n_colors, turn_count, normal_cells = 2, 3, 2
-        elif pid <= 20: n_colors, turn_count, normal_cells = 2, 3, 1
-        else:            n_colors, turn_count, normal_cells = 3, 3, 1
+        # 난이도 단계 자동 결정
+        diff_level = _get_difficulty(pid)
 
         try:
             r = generate_special_puzzle(
                 puzzle_id=pid,
-                n_colors=n_colors,
-                turn_count=turn_count,
-                normal_cells=normal_cells,
+                difficulty=diff_level,
+                n_colors=3,
                 seed=pid * seed_base,
             )
         except RuntimeError as e:
@@ -167,9 +164,9 @@ def update_tblstage(
 
         total = r['board_chips'] + r['hand_chips']
         ok = all(v % 10 == 0 for v in total.values())
-        print(f'  S_{pid:02d} [{diff["score"]:4.0f}점] '
-              f'보드={dict(r["board_chips"])} 손패={dict(r["hand_chips"])} '
-              f'{"✓" if ok else "✗"} Normal={normal_cells}')
+        print(f"  S_{pid:02d} [{r["diff_score"]}점 {r["difficulty"]}] "
+              f"forcing={r["forcing"]} 보드={dict(r["board_chips"])} 손패={dict(r["hand_chips"])} "
+              f"{"✓" if ok else "✗"}")
 
         generated.append({
             'pid': pid,
