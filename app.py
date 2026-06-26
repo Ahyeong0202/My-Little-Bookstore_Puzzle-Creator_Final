@@ -2869,8 +2869,12 @@ elif page == "🧩 7. 묘수풀이 생성기":
 
                     if is_empty:
                         sym = '●' if is_hover and is_target else '○'
-                        fig.add_annotation(x=cx, y=cy, text=label, showarrow=False,
-                            font=dict(size=9, color='white' if tt!=0 else '#333'), align='center')
+                        fig.add_annotation(
+                            x=cx, y=cy, text=sym, showarrow=False,
+                            font=dict(size=20,
+                                      color='#1a6fab' if is_hover and is_target
+                                            else (T['brown'] if is_target else T['brown_lt'])),
+                        )
                     else:
                         chips = cell['chips']
                         lb    = cell.get('locked_below', 0)
