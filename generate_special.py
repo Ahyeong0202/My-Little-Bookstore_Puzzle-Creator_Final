@@ -403,18 +403,54 @@ def _attempt(pid, n_colors, cfg, rng):
     pre_pos     = positions[1:1+n_pre]
     normal_pos  = positions[1+n_pre:]
 
+    # ── prePlaced 인접 체크
+    # 1) 같은 색(c_mid) prePlaced끼리 인접 금지 (시작 즉시 병합 방지)
+    pre_set = set(map(tuple, pre_pos))
+    for pp in pre_pos:
+        for nb in get_neighbors(*pp, Y, X):
+            if tuple(nb) in pre_set:
+                return None  # prePlaced 동색 인접 → 재시도
+    # 2) prePlaced는 반드시 trap 인접 칸에 1개 이상 배치 (가교 역할 보장)
+    trap_nb_set = set(map(tuple, get_neighbors(*trap_pos, Y, X)))
+    if n_pre > 0 and not any(tuple(pp) in trap_nb_set for pp in pre_pos):
+        return None  # trap 인접 prePlaced 없음 → 재시도
+
     # ── prePlaced = c_mid 색으로 설정
-    # trap top(c_top)과 달라서 초기 cascade 없음
-    # trap 잠금1층(c_mid) 수집 후 표면화 시 prePlaced와 자동 연쇄
     pre_chips = [[c_mid] * pre_count_per for _ in range(n_pre)]
 
-    # ── 손패 배열 (3장): top→mid→bot 순서로 배치해야 층별 수집
-    hand_raw = [
-        [c_top] * k_top,
-        [c_mid] * k_mid,
-        [c_bot] * k_bot,
-    ]
+    # ── 손패 배열 (3장) — 혼색 허용
+    # 각 장의 주 색 칩에 다른 색 1~2개를 섞어 혼색 손패 생성
+    # 단, 색별 총합(불변식)은 변하지 않아야 하므로
+    # 섞는 양만큼 해당 색의 주 장에서 이동
+    # 방식: k_top, k_mid, k_bot을 재배분하되 합계 고정
+    def make_mixed_hands(k_t, k_m, k_b, ct, cm, cb, rng):
+        # 각 장에 주색 + 소량의 다른 색 섞기 (30% 확률, 최대 2개)
+        # [top장, mid장, bot장] 기본 배열
+        h = [[ct]*k_t, [cm]*k_m, [cb]*k_b]
+        # 각 장 내부를 랜덤 셔플 (이미 단색이지만 향후 혼색 확장 기반)
+        for i in range(3):
+            rng.shuffle(h[i])
+        return h
+
+    # 혼색: 일부 칩을 다른 장으로 이동 (불변식 유지)
+    # top장에서 c_mid 칩 m개 추가 → mid에서 m개 제거
+    m_mix = rng.randint(0, min(2, k_mid - 1)) if k_mid > 1 else 0
+    b_mix = rng.randint(0, min(1, k_bot - 1)) if k_bot > 1 else 0
+
+    # 손패 구성 (섞인 버전)
+    # 장 A: c_top k_top개 + c_mid m_mix개 (=top+일부mid)
+    # 장 B: c_mid (k_mid-m_mix)개 + c_bot b_mix개
+    # 장 C: c_bot (k_bot-b_mix)개
+    hand_A = [c_top] * k_top + [c_mid] * m_mix
+    hand_B = [c_mid] * (k_mid - m_mix) + [c_bot] * b_mix
+    hand_C = [c_bot] * (k_bot - b_mix)
+    for h in [hand_A, hand_B, hand_C]:
+        rng.shuffle(h)
+    hand_raw = [hand_A, hand_B, hand_C]
     rng.shuffle(hand_raw)  # 순서 랜덤화
+    # 빈 장 방지
+    if any(len(h) == 0 for h in hand_raw):
+        return None
 
     # ── 불변식 검증 (prePlaced는 c_mid에 기여)
     pre_mid_total = n_pre * pre_count_per
