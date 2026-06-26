@@ -2618,8 +2618,8 @@ elif page == "🧩 7. 묘수풀이 생성기":
                 rows_disp.append({
                     '번호':    f"S_{r['pid']:02d}",
                     '상태':    '✅ 성공' if ok else '⚠ 불변식오류',
-                    '난이도':  f"{r['diff']['score']:.0f}점",
-                    '색 수':   r['diff']['color_count'],
+                    '난이도':  f"{r['diff']['diff_score']}점 ({r['diff']['difficulty']})",
+'forcing': r['diff']['forcing'],
                     '보드칩':  str(dict(r['board_chips'])),
                     '손패칩':  str(dict(r['hand_chips'])),
                     'Normal':  r.get('normal_cells', '-'),
@@ -2729,10 +2729,10 @@ elif page == "🧩 7. 묘수풀이 생성기":
         ok_results = [r for r in results if 'error' not in r]
         sel_label = st.selectbox(
             "시뮬레이션할 퍼즐 선택",
-            [f"S_{r['pid']:02d}  (난이도 {r['diff']['score']:.0f}점)" for r in ok_results],
+            [f"S_{r['pid']:02d}  ({r['diff']['difficulty']} {r['diff']['diff_score']}점)" for r in ok_results],
             key="sp_sel_puzzle",
         )
-        sel_idx = [f"S_{r['pid']:02d}  (난이도 {r['diff']['score']:.0f}점)" for r in ok_results].index(sel_label)
+        sel_idx = [f"S_{r['pid']:02d}  ({r['diff']['difficulty']} {r['diff']['diff_score']}점)" for r in ok_results].index(sel_label)
         sel_r = ok_results[sel_idx]
 
         if st.button("🔄 이 퍼즐 불러오기", key="sp_load"):
