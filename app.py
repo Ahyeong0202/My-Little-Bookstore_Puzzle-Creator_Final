@@ -2745,8 +2745,12 @@ elif page == "🧩 7. 묘수풀이 생성기":
                 for x in range(X):
                     tt = tiles[y][x].get('TileType', 1)
                     if   tt == 1: row.append(None)
-                    elif tt == 0: row.append([])
-                    else:          row.append(list(tiles[y][x].get('Stacks', [])))
+                    elif tt == 0: row.append({'chips': [], 'locked_below': 0})
+                    else:
+                        row.append({
+                            'chips': list(tiles[y][x].get('Stacks', [])),
+                            'locked_below': tiles[y][x].get('LockedBelow', 0)
+                        })
                 grid.append(row)
             st.session_state.sp_sim_board   = grid
             st.session_state.sp_sim_hand    = [list(s) for s in sel_r['hand_stacks']]
@@ -2788,7 +2792,7 @@ elif page == "🧩 7. 묘수풀이 생성기":
                     pts_y = [cy + HEX_R*_math.sin(_math.radians(60*i-30)) for i in range(6)]
                     pts_x.append(pts_x[0]); pts_y.append(pts_y[0])
 
-                    is_empty = len(cell) == 0
+                    is_empty = len(cell['chips']) == 0
                     fill_col = '#D5E8F5' if (is_empty and sel_hand is not None) else (
                                T['bg2'] if is_empty else T['bg3'])
                     border_col = T['border'] if not is_empty else (
@@ -2802,8 +2806,8 @@ elif page == "🧩 7. 묘수풀이 생성기":
                     ))
 
                     # 칩 표시 (top부터 최대 3개)
-                    if cell:
-                        show = cell[-3:]  # [-3:]= 위 3개, [-1]=top
+                    if cell['chips']:
+                        show = cell['chips'][-3:]  # [-3:]= 위 3개, [-1]=top
                         for ki, c_code in enumerate(reversed(show)):  # top이 위에 오도록
                             dot_y = cy + 8 - ki*12
                             fig.add_trace(_go.Scatter(
@@ -2819,7 +2823,7 @@ elif page == "🧩 7. 묘수풀이 생성기":
                         # 총 개수
                         fig.add_trace(_go.Scatter(
                             x=[cx+22], y=[cy+22],
-                            mode='text', text=[str(len(cell))],
+                            mode='text', text=[str(len(cell['chips']))],
                             textfont=dict(size=9, color=T['text2']),
                             hoverinfo='skip',
                         ))
@@ -2849,7 +2853,7 @@ elif page == "🧩 7. 묘수풀이 생성기":
                         cell = board_grid[py][px]
                         if cell is None:
                             st.warning("Blank 칸입니다.")
-                        elif len(cell) > 0:
+                        elif len(cell['chips']) > 0:
                             st.warning("이미 칩이 있는 칸입니다.")
                         else:
                             # 히스토리 저장
@@ -2885,7 +2889,7 @@ elif page == "🧩 7. 묘수풀이 생성기":
                     opacity = "0.35" if is_used else "1.0"
                     chip_html = ''.join(
                         f'<span style="display:inline-block;width:16px;height:16px;border-radius:50%;'
-                        f'background:{CHIP_HEX.get(c,"#888")};margin:1px;"></span>'
+                        f'background:{CHIP_COLOR_HEX.get(c,"#888")};margin:1px;"></span>'
                         for c in reversed(hs)  # top이 먼저 보이도록
                     )
                     st.markdown(
