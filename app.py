@@ -1796,11 +1796,7 @@ elif page == "🗺️ 3. 판 모양 뷰어":
                         border_w = 3 if is_sel else 1.5
                         fill_c   = HEX_COLORS.get(name,'#CCC') if name!='Blank' else 'rgba(80,80,80,0.3)'
 
-                        fig.add_trace(go.Scatter(x=hx,y=hy,fill='toself',
-                            fillcolor=fill_c,
-                            line=dict(color=border_c,width=border_w),
-                            mode='lines',hoverinfo='skip',showlegend=False))
-
+                        # label 먼저 정의
                         label = name[:2]
                         if name in ('Stack','StackLock','Ice') and 'Stacks' in tile:
                             stacks = tile['Stacks']
@@ -1812,11 +1808,10 @@ elif page == "🗺️ 3. 판 모양 뷰어":
                         if show_coord or edit_mode:
                             label = f"({y},{x})\n{label}"
 
-                        fig.add_annotation(
-                        x=cx, y=cy + HEX_R - 8,
-                        text=f"({y},{x})", showarrow=False,
-                        font=dict(size=9, color='#1a6fab' if (is_hover and is_target) else T['text2']),
-                        )
+                        fig.add_trace(go.Scatter(x=hx,y=hy,fill='toself', ...))  # 기존 trace
+
+                        fig.add_annotation(x=cx, y=cy, text=label, showarrow=False,
+                            font=dict(size=9, color='white' if tt!=0 else '#333'), align='center')
 
                 fig.update_layout(
                     width=fig_w, height=fig_h,
