@@ -2563,19 +2563,15 @@ elif page == "🧩 7. 묘수풀이 생성기":
     # 섹션 A: 생성 파라미터
     # ══════════════════════════════════════
     st.markdown("#### ① 생성 파라미터")
-    col1, col2, col3, col4 = st.columns(4)
+    col1, col2, col3 = st.columns(3)
     with col1:
         sp_start = st.number_input("시작 번호", min_value=1, max_value=999, value=35)
     with col2:
         sp_end   = st.number_input("끝 번호",   min_value=1, max_value=999, value=37)
     with col3:
-        sp_normal = st.selectbox("Normal 칸 수", [1, 2], index=0,
-                                  help="1=고난이도(배치 압박 강함), 2=중간")
-    with col4:
-        sp_colors = st.selectbox("색 수", [2, 3], index=0)
+        sp_diff  = st.selectbox("난이도", ["D8","D12","D34","D48","D52"], index=2,
+                                  help="D8=쉬움(빈칸6) ~ D52=어려움(빈칸2+가교4)")
 
-    sp_turn = 3  # Stack1~Stack3만 사용 (TurnCount 고정)
-    st.info("TurnCount는 3으로 고정 (Stack1~Stack3 사용)")
     sp_seed = st.number_input("시드 (0=자동)", min_value=0, value=0)
 
     if st.button("🎲 특수 퍼즐 생성", type="primary", use_container_width=True):
@@ -2589,9 +2585,8 @@ elif page == "🧩 7. 묘수풀이 생성기":
                 seed = int(sp_seed) if sp_seed > 0 else pid * 12345
                 r = generate_special_puzzle(
                     puzzle_id=pid,
-                    n_colors=sp_colors,
-                    turn_count=sp_turn,
-                    normal_cells=sp_normal,
+                    difficulty=sp_diff,
+                    n_colors=3,
                     seed=seed,
                 )
                 r['pid'] = pid
