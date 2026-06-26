@@ -2808,34 +2808,38 @@ elif page == "🧩 7. 묘수풀이 생성기":
 
                     # 칩 표시 (top부터 최대 3개)
                     if cell['chips']:
-                        show = cell['chips'][-3:]  # [-3:]= 위 3개, [-1]=top
-                        for ki, c_code in enumerate(reversed(show)):  # top이 위에 오도록
-                            dot_y = cy + 8 - ki*12
-                            fig.add_trace(_go.Scatter(
-                                x=[cx], y=[dot_y],
-                                mode='markers+text',
-                                marker=dict(size=14, color=CHIP_HEX.get(c_code,'#888'),
-                                            line=dict(color='white', width=1)),
-                                text=[SP_COLOR_NAMES[c_code][0]] if ki==0 else [''],
-                                textposition='middle center',
-                                textfont=dict(size=8, color='white'),
-                                hoverinfo='skip',
-                            ))
-                        # 총 개수
-                        fig.add_trace(_go.Scatter(
-                            x=[cx+22], y=[cy+22],
-                            mode='text', text=[str(len(cell['chips']))],
-                            textfont=dict(size=9, color=T['text2']),
-                            hoverinfo='skip',
-                        ))
-                    else:
-                        # 빈 칸 표시
-                        fig.add_trace(_go.Scatter(
-                            x=[cx], y=[cy],
-                            mode='text', text=['○'],
-                            textfont=dict(size=20, color=T['brown'] if sel_hand is not None else T['brown_lt']),
-                            hoverinfo='skip',
-                        ))
+                        chips = cell['chips']
+                        lb = cell['locked_below']
+                        # 아래→위 순서로 색+개수 그룹화
+                        def make_groups(arr):
+                            if not arr: return []
+                            g=[]; cur=arr[0]; n=1
+                            for c in arr[1:]:
+                                if c==cur: n+=1
+                                else: g.append((cur,n)); cur=c; n=1
+                            g.append((cur,n)); return g
+                        locked_grp = make_groups(chips[:lb])
+                        surf_grp   = make_groups(chips[lb:])
+                        abbr = {0:'B',1:'Y',2:'R',3:'G',4:'O',5:'P',6:'W',7:'K'}
+                        chex_sp = {0:'#378add',1:'#c8a000',2:'#e24b4a',3:'#1d9e75',
+                                   4:'#ef9f27',5:'#9254de',6:'#999',7:'#444'}
+                        # HTML annotation으로 한 줄씩 표시 (아래층 먼저)
+                        all_grp = [('lock', c, n) for c,n in locked_grp] + \
+                                  [('surf', c, n) for c,n in surf_grp]
+                        line_h = 13
+                        total_h = len(all_grp) * line_h
+                        start_y = cy + total_h/2 - line_h*0.6
+                        for li, (typ, c, n) in enumerate(all_grp):
+                            ly = start_y - li * line_h
+                            alpha = 0.4 if typ=='lock' else 1.0
+                            color = chex_sp.get(c, '#888')
+                            fig.add_annotation(
+                                x=cx, y=ly,
+                                text=f"{abbr.get(c,'?')}{n}",
+                                showarrow=False,
+                                font=dict(size=11, color=color),
+                                opacity=alpha,
+                            )
 
             st.plotly_chart(fig, use_container_width=False)
 
@@ -2888,10 +2892,19 @@ elif page == "🧩 7. 묘수풀이 생성기":
                     is_sel  = sel_hand == hi
                     border  = "3px solid #6B3A2A" if is_sel else "1px solid #C4956A"
                     opacity = "0.35" if is_used else "1.0"
-                    chip_html = ''.join(
-                        f'<span style="display:inline-block;width:16px;height:16px;border-radius:50%;'
-                        f'background:{CHIP_COLOR_HEX.get(c,"#888")};margin:1px;"></span>'
-                        for c in reversed(hs)  # top이 먼저 보이도록
+                    abbr_map = {0:'B',1:'Y',2:'R',3:'G',4:'O',5:'P',6:'W',7:'K'}
+                    chex_map = {0:'#378add',1:'#c8a000',2:'#e24b4a',3:'#1d9e75',
+                                4:'#ef9f27',5:'#9254de',6:'#888',7:'#444'}
+                    def hand_label(s):
+                        g=[]; cur=s[0]; n=1
+                        for c in s[1:]:
+                            if c==cur: n+=1
+                            else: g.append((cur,n)); cur=c; n=1
+                        g.append((cur,n)); return g
+                    chip_html = ' '.join(
+                        f'<span style="color:{chex_map.get(c,"#888")};font-weight:600;font-size:12px;">'
+                        f'{abbr_map.get(c,"?")+str(n)}</span>'
+                        for c,n in hand_label(hs)  # hs[0]이 아래쪽 = 왼쪽
                     )
                     st.markdown(
                         f'<div style="border:{border};border-radius:8px;padding:8px;'
