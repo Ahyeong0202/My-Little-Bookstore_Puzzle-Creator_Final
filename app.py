@@ -2770,76 +2770,128 @@ elif page == "🧩 7. 묘수풀이 생성기":
             import plotly.graph_objects as _go
             import math as _math
 
-            HEX_R = 35
+            # ── 보드 시각화 (Plotly — 판모양뷰어 방식)
+            import plotly.graph_objects as _go
+            import math as _math
+
+            HEX_R = 38
+            def _sp_hex_center(y, x):
+                cw = HEX_R * 1.5
+                rh = HEX_R * _math.sqrt(3)
+                return (HEX_R + x*cw + (HEX_R*0.75 if y%2 else 0),
+                        HEX_R + y*rh*0.87)
+            def _sp_hex_path(cx, cy, r):
+                xs, ys = [], []
+                for i in range(6):
+                    a = _math.pi/180*(60*i-30)
+                    xs.append(cx + r*_math.cos(a))
+                    ys.append(cy + r*_math.sin(a))
+                xs.append(xs[0]); ys.append(ys[0])
+                return xs, ys
+
+            abbr_sp  = {0:'B',1:'Y',2:'R',3:'G',4:'O',5:'P',6:'W',7:'K'}
+            chex_sp  = {0:'#378add',1:'#c8a000',2:'#e24b4a',3:'#1d9e75',
+                        4:'#ef9f27',5:'#9254de',6:'#999',7:'#444'}
+
+            def _grp(arr):
+                if not arr: return []
+                g=[]; cur=arr[0]; n=1
+                for c in arr[1:]:
+                    if c==cur: n+=1
+                    else: g.append((cur,n)); cur=c; n=1
+                g.append((cur,n)); return g
+
+            # 캔버스 크기 계산
+            max_cx, max_cy = _sp_hex_center(Y_b-1, X_b-1)
+            fig_w = int(max_cx + HEX_R + 10)
+            fig_h = int(max_cy + HEX_R + 10)
+
             fig = _go.Figure()
             fig.update_layout(
-                width=500, height=350,
-                margin=dict(l=10,r=10,t=10,b=10),
-                xaxis=dict(visible=False, range=[-20, X_b*HEX_R*1.6+20]),
-                yaxis=dict(visible=False, scaleanchor='x', range=[-20, Y_b*HEX_R*1.6+20]),
-                plot_bgcolor=T['plot_bg'], paper_bgcolor=T['plot_bg'],
+                width=fig_w, height=fig_h,
+                margin=dict(l=0, r=0, t=0, b=0),
+                xaxis=dict(visible=False, range=[0, fig_w], scaleanchor='y'),
+                yaxis=dict(visible=False, range=[fig_h, 0]),
+                plot_bgcolor=T['bg2'], paper_bgcolor=T['bg2'],
                 showlegend=False,
             )
+
+            # 선택된 빈 칸 좌표 (배치 후보)
+            hover_y = st.session_state.get('sp_hover_y', -1)
+            hover_x = st.session_state.get('sp_hover_x', -1)
 
             for y in range(Y_b):
                 for x in range(X_b):
                     cell = board_grid[y][x]
-                    if cell is None: continue
-                    if not isinstance(cell, dict): continue
-                    cx = x * HEX_R*1.5 + (HEX_R*0.75 if y%2 else 0) + HEX_R
-                    cy = y * HEX_R*0.87*2 + HEX_R
-
-                    pts_x = [cx + HEX_R*_math.cos(_math.radians(60*i-30)) for i in range(6)]
-                    pts_y = [cy + HEX_R*_math.sin(_math.radians(60*i-30)) for i in range(6)]
-                    pts_x.append(pts_x[0]); pts_y.append(pts_y[0])
+                    if cell is None:
+                        continue
+                    if not isinstance(cell, dict):
+                        continue
+                    cx, cy = _sp_hex_center(y, x)
+                    hx, hy = _sp_hex_path(cx, cy, HEX_R - 1)
 
                     is_empty = len(cell['chips']) == 0
-                    fill_col = '#D5E8F5' if (is_empty and sel_hand is not None) else (
-                               T['bg2'] if is_empty else T['bg3'])
-                    border_col = T['border'] if not is_empty else (
-                                 T['brown'] if sel_hand is not None else T['brown_lt'])
+                    is_hover = (y == hover_y and x == hover_x)
+                    is_target = is_empty and sel_hand is not None
+
+                    # 배경색
+                    if is_hover and is_target:
+                        fill = '#b3d9f5'
+                        border = '#1a6fab'
+                        bw = 3
+                    elif is_target:
+                        fill = '#d5eaf7'
+                        border = T['brown']
+                        bw = 1.5
+                    elif is_empty:
+                        fill = T['bg']
+                        border = T['brown_lt']
+                        bw = 1
+                    else:
+                        fill = T['bg3']
+                        border = T['border']
+                        bw = 1
 
                     fig.add_trace(_go.Scatter(
-                        x=pts_x, y=pts_y, fill='toself',
-                        fillcolor=fill_col,
-                        line=dict(color=border_col, width=2 if (is_empty and sel_hand is not None) else 1),
+                        x=hx, y=hy, fill='toself',
+                        fillcolor=fill,
+                        line=dict(color=border, width=bw),
                         mode='lines', hoverinfo='skip',
                     ))
 
-                    # 칩 표시 (top부터 최대 3개)
-                    if cell['chips']:
+                    if is_empty:
+                        sym = '●' if is_hover and is_target else '○'
+                        fig.add_annotation(
+                            x=cx, y=cy, text=sym, showarrow=False,
+                            font=dict(size=20,
+                                      color='#1a6fab' if is_hover and is_target
+                                            else (T['brown'] if is_target else T['brown_lt'])),
+                        )
+                    else:
                         chips = cell['chips']
-                        lb = cell['locked_below']
-                        # 아래→위 순서로 색+개수 그룹화
-                        def make_groups(arr):
-                            if not arr: return []
-                            g=[]; cur=arr[0]; n=1
-                            for c in arr[1:]:
-                                if c==cur: n+=1
-                                else: g.append((cur,n)); cur=c; n=1
-                            g.append((cur,n)); return g
-                        locked_grp = make_groups(chips[:lb])
-                        surf_grp   = make_groups(chips[lb:])
-                        abbr = {0:'B',1:'Y',2:'R',3:'G',4:'O',5:'P',6:'W',7:'K'}
-                        chex_sp = {0:'#378add',1:'#c8a000',2:'#e24b4a',3:'#1d9e75',
-                                   4:'#ef9f27',5:'#9254de',6:'#999',7:'#444'}
-                        # HTML annotation으로 한 줄씩 표시 (아래층 먼저)
-                        all_grp = [('lock', c, n) for c,n in locked_grp] + \
-                                  [('surf', c, n) for c,n in surf_grp]
-                        line_h = 13
-                        total_h = len(all_grp) * line_h
-                        start_y = cy + total_h/2 - line_h*0.6
+                        lb    = cell.get('locked_below', 0)
+                        locked_grp = _grp(chips[:lb])
+                        surf_grp   = _grp(chips[lb:])
+                        all_grp = [('L', c, n) for c,n in locked_grp] + \
+                                  [('S', c, n) for c,n in surf_grp]
+                        lh = 13
+                        total_h = len(all_grp) * lh
+                        base_y = cy + total_h/2 - lh*0.6
                         for li, (typ, c, n) in enumerate(all_grp):
-                            ly = start_y - li * line_h
-                            alpha = 0.4 if typ=='lock' else 1.0
-                            color = chex_sp.get(c, '#888')
                             fig.add_annotation(
-                                x=cx, y=ly,
-                                text=f"{abbr.get(c,'?')}{n}",
+                                x=cx, y=base_y - li*lh,
+                                text=f"{abbr_sp.get(c,'?')}{n}",
                                 showarrow=False,
-                                font=dict(size=11, color=color),
-                                opacity=alpha,
+                                font=dict(size=11, color=chex_sp.get(c,'#888')),
+                                opacity=0.38 if typ=='L' else 1.0,
                             )
+
+                    # 좌표 레이블
+                    fig.add_annotation(
+                        x=cx, y=cy + HEX_R - 7,
+                        text=f"{y},{x}", showarrow=False,
+                        font=dict(size=7, color=T['text2']),
+                    )
 
             st.plotly_chart(fig, use_container_width=False)
 
@@ -2851,6 +2903,9 @@ elif page == "🧩 7. 묘수풀이 생성기":
                     place_y = st.number_input("행(Y)", 0, Y_b-1, 0, key="sp_py")
                 with c2:
                     place_x = st.number_input("열(X)", 0, X_b-1, 0, key="sp_px")
+                # 입력값 → 하이라이트 반영
+                st.session_state['sp_hover_y'] = int(place_y)
+                st.session_state['sp_hover_x'] = int(place_x)
                 with c3:
                     st.write("")
                     if st.button("✅ 배치", key="sp_place"):
