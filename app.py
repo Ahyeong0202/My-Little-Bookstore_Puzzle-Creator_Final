@@ -2785,6 +2785,7 @@ elif page == "🧩 7. 묘수풀이 생성기":
                 for x in range(X_b):
                     cell = board_grid[y][x]
                     if cell is None: continue
+                    if not isinstance(cell, dict): continue
                     cx = x * HEX_R*1.5 + (HEX_R*0.75 if y%2 else 0) + HEX_R
                     cy = y * HEX_R*0.87*2 + HEX_R
 
