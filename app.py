@@ -755,16 +755,20 @@ with st.sidebar:
     if IS_EN:
         page_options = ["🏠 Home","📖 1. Manual","📊 2. Difficulty Analysis",
                         "🗺️ 3. Board Viewer","🎲 4. JSON Generator",
-                        "🔧 5. Settings","🗄️ 6. Archive"]
+                        "🔧 5. Settings","🗄️ 6. Archive",
+                        "🧩 7. Special Puzzle"]
     else:
         page_options = ["🏠 홈","📖 1. 매뉴얼","📊 2. 난이도 분석",
                         "🗺️ 3. 판 모양 뷰어","🎲 4. JSON 생성기",
-                        "🔧 5. 설정","🗄️ 6. 아카이브"]
+                        "🔧 5. 설정","🗄️ 6. 아카이브",
+                        "🧩 7. 묘수풀이 생성기"]
     # 언어 바뀌어도 같은 탭 유지
     PAGE_MAP_KR = ["🏠 홈","📖 1. 매뉴얼","📊 2. 난이도 분석",
-                   "🗺️ 3. 판 모양 뷰어","🎲 4. JSON 생성기","🔧 5. 설정","🗄️ 6. 아카이브"]
+                   "🗺️ 3. 판 모양 뷰어","🎲 4. JSON 생성기","🔧 5. 설정","🗄️ 6. 아카이브",
+                   "🧩 7. 묘수풀이 생성기"]
     PAGE_MAP_EN = ["🏠 Home","📖 1. Manual","📊 2. Difficulty Analysis",
-                   "🗺️ 3. Board Viewer","🎲 4. JSON Generator","🔧 5. Settings","🗄️ 6. Archive"]
+                   "🗺️ 3. Board Viewer","🎲 4. JSON Generator","🔧 5. Settings","🗄️ 6. Archive",
+                   "🧩 7. Special Puzzle"]
     cur_page_key = st.session_state.get("cur_page_idx", 0)
     page_idx = st.radio("", range(len(page_options)),
                         format_func=lambda i: page_options[i],
@@ -2511,3 +2515,424 @@ elif page == "🗄️ 6. 아카이브":
                 st.plotly_chart(fig_cmp,use_container_width=True)
             else:
                 st.info("integrated_difficulty.csv를 사이드바에서 업로드하면 곡선 비교가 가능합니다.")
+
+
+# ══════════════════════════════════════════════════════
+# 탭 7 — 묘수풀이 특수 퍼즐 생성기
+# ══════════════════════════════════════════════════════
+elif page == "🧩 7. 묘수풀이 생성기":
+    import sys as _sys
+    _sys.path.insert(0, str(BASE))
+    try:
+        from generate_special import (
+            generate_special_puzzle, analyze_special, solve,
+            Board, get_neighbors, COLOR_MAP as SP_COLOR_MAP,
+            MATCH_TARGET,
+        )
+        _HAS_GEN = True
+    except ImportError:
+        _HAS_GEN = False
+
+    st.markdown('<div class="page-anim">', unsafe_allow_html=True)
+    st.markdown('<div class="section-header">🧩 묘수풀이(특수 퍼즐) 생성기</div>', unsafe_allow_html=True)
+
+    if not _HAS_GEN:
+        st.error("generate_special.py 파일이 app.py와 같은 디렉토리에 없습니다.")
+        st.stop()
+
+    CHIP_COLOR_HEX = {
+        0:'#1890FF', 1:'#FADB14', 2:'#F5222D', 3:'#52C41A',
+        4:'#FA8C16', 5:'#722ED1', 6:'#BFBFBF', 7:'#141414'
+    }
+    SP_COLOR_NAMES = ['Blue','Yellow','Red','Green','Orange','Purple','White','Black']
+
+    # ── session state 초기화
+    for k, v in {
+        'sp_results': [],
+        'sp_sim_board': None,
+        'sp_sim_hand': [],
+        'sp_sim_used': set(),
+        'sp_sim_sel': None,
+        'sp_sim_history': [],
+        'sp_cur_pid': None,
+    }.items():
+        if k not in st.session_state:
+            st.session_state[k] = v
+
+    # ══════════════════════════════════════
+    # 섹션 A: 생성 파라미터
+    # ══════════════════════════════════════
+    st.markdown("#### ① 생성 파라미터")
+    col1, col2, col3, col4 = st.columns(4)
+    with col1:
+        sp_start = st.number_input("시작 번호", min_value=1, max_value=999, value=35)
+    with col2:
+        sp_end   = st.number_input("끝 번호",   min_value=1, max_value=999, value=37)
+    with col3:
+        sp_normal = st.selectbox("Normal 칸 수", [1, 2], index=0,
+                                  help="1=고난이도(배치 압박 강함), 2=중간")
+    with col4:
+        sp_colors = st.selectbox("색 수", [2, 3], index=0)
+
+    sp_turn = 3  # Stack1~Stack3만 사용 (TurnCount 고정)
+    st.info("TurnCount는 3으로 고정 (Stack1~Stack3 사용)")
+    sp_seed = st.number_input("시드 (0=자동)", min_value=0, value=0)
+
+    if st.button("🎲 특수 퍼즐 생성", type="primary", use_container_width=True):
+        st.session_state.sp_results = []
+        progress = st.progress(0)
+        status   = st.empty()
+        total = sp_end - sp_start + 1
+        for i, pid in enumerate(range(int(sp_start), int(sp_end)+1)):
+            status.text(f"S_{pid:02d} 생성 중... ({i+1}/{total})")
+            try:
+                seed = int(sp_seed) if sp_seed > 0 else pid * 12345
+                r = generate_special_puzzle(
+                    puzzle_id=pid,
+                    n_colors=sp_colors,
+                    turn_count=sp_turn,
+                    normal_cells=sp_normal,
+                    seed=seed,
+                )
+                r['pid'] = pid
+                r['diff'] = analyze_special(r)
+                st.session_state.sp_results.append(r)
+            except Exception as e:
+                st.session_state.sp_results.append({'pid': pid, 'error': str(e)})
+            progress.progress((i+1)/total)
+        status.text("완료!")
+
+    # ══════════════════════════════════════
+    # 섹션 B: 결과 목록
+    # ══════════════════════════════════════
+    results = st.session_state.sp_results
+    if results:
+        st.markdown("---")
+        st.markdown("#### ② 생성 결과")
+
+        # 요약 테이블
+        rows_disp = []
+        for r in results:
+            if 'error' in r:
+                rows_disp.append({'번호': f"S_{r['pid']:02d}", '상태': '❌ 실패',
+                                   '오류': r['error'], '난이도': '-',
+                                   '보드칩': '-', '손패칩': '-'})
+            else:
+                total = r['board_chips'] + r['hand_chips']
+                ok = all(v % 10 == 0 for v in total.values())
+                rows_disp.append({
+                    '번호':    f"S_{r['pid']:02d}",
+                    '상태':    '✅ 성공' if ok else '⚠ 불변식오류',
+                    '난이도':  f"{r['diff']['score']:.0f}점",
+                    '색 수':   r['diff']['color_count'],
+                    '보드칩':  str(dict(r['board_chips'])),
+                    '손패칩':  str(dict(r['hand_chips'])),
+                    'Normal':  r.get('normal_cells', '-'),
+                    'Stack':   r.get('n_stacks', '-'),
+                })
+        st.dataframe(pd.DataFrame(rows_disp), use_container_width=True, hide_index=True)
+
+        # 다운로드: JSON ZIP
+        import zipfile, io as _io
+        zip_buf = _io.BytesIO()
+        with zipfile.ZipFile(zip_buf, 'w', zipfile.ZIP_DEFLATED) as zf:
+            for r in results:
+                if 'error' not in r:
+                    zf.writestr(
+                        f"S_{r['pid']:03d}.json",
+                        json.dumps(r['board_json'], ensure_ascii=False, indent=2)
+                    )
+        st.download_button(
+            "📥 보드 JSON ZIP 다운로드",
+            zip_buf.getvalue(),
+            f"special_puzzles_S{int(sp_start):02d}-S{int(sp_end):02d}.zip",
+            "application/zip",
+            use_container_width=True,
+        )
+
+        # ── StackInfo / Stage 미리보기
+        with st.expander("📋 StackInfo / Stage 행 미리보기"):
+            si_rows = [r['stack_info'] for r in results if 'error' not in r]
+            st_rows = [r['stage_row']  for r in results if 'error' not in r]
+            if si_rows:
+                st.markdown("**StackInfo 탭**")
+                st.dataframe(pd.DataFrame(si_rows), use_container_width=True, hide_index=True)
+                st.markdown("**Stage 탭**")
+                st.dataframe(pd.DataFrame(st_rows), use_container_width=True, hide_index=True)
+
+        # ── tblStage xlsx 업데이트
+        st.markdown("---")
+        st.markdown("#### ③ tblStage.xlsx 업데이트")
+        up_tbl_sp = st.file_uploader("tblStage.xlsx 업로드 (업데이트할 파일)", type=["xlsx"], key="up_tbl_sp")
+        if up_tbl_sp and st.button("📝 xlsx에 행 추가 및 다운로드", use_container_width=True):
+            from openpyxl import load_workbook as _lwb
+            wb2 = _lwb(up_tbl_sp)
+            ws_s  = wb2['Stage']
+            ws_si = wb2['StackInfo']
+            s_headers  = [c.value for c in next(ws_s.iter_rows(min_row=1, max_row=1))]
+            si_headers = [c.value for c in next(ws_si.iter_rows(min_row=1, max_row=1))]
+
+            exist_ids = {row[0] for row in ws_s.iter_rows(min_row=2, values_only=True) if row[0]}
+            exist_si  = {row[0] for row in ws_si.iter_rows(min_row=2, values_only=True) if row[0]}
+
+            added = 0
+            for r in results:
+                if 'error' in r: continue
+                pid = r['pid']
+                if (1000+pid) in exist_ids or pid in exist_si: continue
+
+                row_num = ws_s.max_row + 1
+                sr = r['stage_row']
+                stage_vals = []
+                for h in s_headers:
+                    if h == 'Id':                        stage_vals.append(1000+pid)
+                    elif h == 'Mode':                    stage_vals.append('Turn')
+                    elif h == 'LevelName':               stage_vals.append(f'S {pid:02d}')
+                    elif h == 'PlaceableCount':          stage_vals.append(3)
+                    elif h == 'IsPreview':               stage_vals.append(False)
+                    elif h == 'TotalAllocation':         stage_vals.append(sr['TurnCount'])
+                    elif h == 'Extra':                   stage_vals.append(pid)
+                    elif h == 'TurnCount':               stage_vals.append(sr['TurnCount'])
+                    elif h in ('IceCount','GrassCount','WoodCount','CameraPictureCount'): stage_vals.append(0)
+                    elif h == 'GenreXPReward':           stage_vals.append(10)
+                    elif h == 'XpReward':    stage_vals.append(f'=CEILING(65+((A{row_num}-1000)^ 1.3), 5)')
+                    elif h == 'GoldReward':  stage_vals.append(f'=CEILING(800+((A{row_num}-1002)^ 3), 5)')
+                    elif h == 'TokenReward': stage_vals.append(f'=CEILING(10+((A{row_num}-1000)^ 1.5), 5)')
+                    elif h == 'GemReward':   stage_vals.append(f'=CEILING(5+((A{row_num}-1000)^ 1.45), 5)')
+                    else:                                stage_vals.append(None)
+                ws_s.append(stage_vals)
+
+                si_vals = []
+                si_data = r['stack_info']
+                for h in si_headers:
+                    if h == 'Id': si_vals.append(pid)
+                    elif h and h.startswith('Stack'): si_vals.append(si_data.get(h))
+                    else: si_vals.append(None)
+                ws_si.append(si_vals)
+                added += 1
+
+            buf2 = _io.BytesIO()
+            wb2.save(buf2)
+            st.success(f"{added}개 행 추가 완료!")
+            st.download_button(
+                "📥 tblStage_updated.xlsx 다운로드",
+                buf2.getvalue(),
+                "tblStage_updated.xlsx",
+                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                use_container_width=True,
+            )
+
+    # ══════════════════════════════════════
+    # 섹션 C: 인게임 시뮬레이터
+    # ══════════════════════════════════════
+    st.markdown("---")
+    st.markdown("#### ④ 퍼즐 시뮬레이터")
+
+    if not results or all('error' in r for r in results):
+        st.info("위에서 퍼즐을 먼저 생성하세요.")
+    else:
+        ok_results = [r for r in results if 'error' not in r]
+        sel_label = st.selectbox(
+            "시뮬레이션할 퍼즐 선택",
+            [f"S_{r['pid']:02d}  (난이도 {r['diff']['score']:.0f}점)" for r in ok_results],
+            key="sp_sel_puzzle",
+        )
+        sel_idx = [f"S_{r['pid']:02d}  (난이도 {r['diff']['score']:.0f}점)" for r in ok_results].index(sel_label)
+        sel_r = ok_results[sel_idx]
+
+        if st.button("🔄 이 퍼즐 불러오기", key="sp_load"):
+            tiles = sel_r['board_json']['Tiles']
+            Y = sel_r['board_json']['YCells']
+            X = sel_r['board_json']['XCells']
+            grid = []
+            for y in range(Y):
+                row = []
+                for x in range(X):
+                    tt = tiles[y][x].get('TileType', 1)
+                    if   tt == 1: row.append(None)
+                    elif tt == 0: row.append([])
+                    else:          row.append(list(tiles[y][x].get('Stacks', [])))
+                grid.append(row)
+            st.session_state.sp_sim_board   = grid
+            st.session_state.sp_sim_hand    = [list(s) for s in sel_r['hand_stacks']]
+            st.session_state.sp_sim_used    = set()
+            st.session_state.sp_sim_sel     = None
+            st.session_state.sp_sim_history = []
+            st.session_state.sp_cur_pid     = sel_r['pid']
+
+        board_grid = st.session_state.sp_sim_board
+        if board_grid is not None:
+            Y_b = len(board_grid); X_b = len(board_grid[0])
+            hand_stacks_sim = st.session_state.sp_sim_hand
+            used = st.session_state.sp_sim_used
+            sel_hand = st.session_state.sp_sim_sel
+
+            # ── 보드 시각화 (Plotly)
+            import plotly.graph_objects as _go
+            import math as _math
+
+            HEX_R = 35
+            fig = _go.Figure()
+            fig.update_layout(
+                width=500, height=350,
+                margin=dict(l=10,r=10,t=10,b=10),
+                xaxis=dict(visible=False, range=[-20, X_b*HEX_R*1.6+20]),
+                yaxis=dict(visible=False, scaleanchor='x', range=[-20, Y_b*HEX_R*1.6+20]),
+                plot_bgcolor=T['plot_bg'], paper_bgcolor=T['plot_bg'],
+                showlegend=False,
+            )
+
+            for y in range(Y_b):
+                for x in range(X_b):
+                    cell = board_grid[y][x]
+                    if cell is None: continue
+                    cx = x * HEX_R*1.5 + (HEX_R*0.75 if y%2 else 0) + HEX_R
+                    cy = y * HEX_R*0.87*2 + HEX_R
+
+                    pts_x = [cx + HEX_R*_math.cos(_math.radians(60*i-30)) for i in range(6)]
+                    pts_y = [cy + HEX_R*_math.sin(_math.radians(60*i-30)) for i in range(6)]
+                    pts_x.append(pts_x[0]); pts_y.append(pts_y[0])
+
+                    is_empty = len(cell) == 0
+                    fill_col = '#D5E8F5' if (is_empty and sel_hand is not None) else (
+                               T['bg2'] if is_empty else T['bg3'])
+                    border_col = T['border'] if not is_empty else (
+                                 T['brown'] if sel_hand is not None else T['brown_lt'])
+
+                    fig.add_trace(_go.Scatter(
+                        x=pts_x, y=pts_y, fill='toself',
+                        fillcolor=fill_col,
+                        line=dict(color=border_col, width=2 if (is_empty and sel_hand is not None) else 1),
+                        mode='lines', hoverinfo='skip',
+                    ))
+
+                    # 칩 표시 (top부터 최대 3개)
+                    if cell:
+                        show = cell[-3:]  # [-3:]= 위 3개, [-1]=top
+                        for ki, c_code in enumerate(reversed(show)):  # top이 위에 오도록
+                            dot_y = cy + 8 - ki*12
+                            fig.add_trace(_go.Scatter(
+                                x=[cx], y=[dot_y],
+                                mode='markers+text',
+                                marker=dict(size=14, color=CHIP_HEX.get(c_code,'#888'),
+                                            line=dict(color='white', width=1)),
+                                text=[SP_COLOR_NAMES[c_code][0]] if ki==0 else [''],
+                                textposition='middle center',
+                                textfont=dict(size=8, color='white'),
+                                hoverinfo='skip',
+                            ))
+                        # 총 개수
+                        fig.add_trace(_go.Scatter(
+                            x=[cx+22], y=[cy+22],
+                            mode='text', text=[str(len(cell))],
+                            textfont=dict(size=9, color=T['text2']),
+                            hoverinfo='skip',
+                        ))
+                    else:
+                        # 빈 칸 표시
+                        fig.add_trace(_go.Scatter(
+                            x=[cx], y=[cy],
+                            mode='text', text=['○'],
+                            textfont=dict(size=20, color=T['brown'] if sel_hand is not None else T['brown_lt']),
+                            hoverinfo='skip',
+                        ))
+
+            st.plotly_chart(fig, use_container_width=False)
+
+            # ── 칸 선택 (배치용)
+            if sel_hand is not None:
+                st.markdown(f"**Stack {sel_hand+1}** 선택됨 — 배치할 빈 칸 좌표 입력:")
+                c1, c2, c3 = st.columns([1,1,2])
+                with c1:
+                    place_y = st.number_input("행(Y)", 0, Y_b-1, 0, key="sp_py")
+                with c2:
+                    place_x = st.number_input("열(X)", 0, X_b-1, 0, key="sp_px")
+                with c3:
+                    st.write("")
+                    if st.button("✅ 배치", key="sp_place"):
+                        py, px = int(place_y), int(place_x)
+                        cell = board_grid[py][px]
+                        if cell is None:
+                            st.warning("Blank 칸입니다.")
+                        elif len(cell) > 0:
+                            st.warning("이미 칩이 있는 칸입니다.")
+                        else:
+                            # 히스토리 저장
+                            import copy
+                            st.session_state.sp_sim_history.append({
+                                'board': copy.deepcopy(board_grid),
+                                'used':  set(used),
+                                'sel':   sel_hand,
+                            })
+                            # Board 객체로 배치+cascade
+                            b = Board(board_grid)
+                            b.place(py, px, hand_stacks_sim[sel_hand])
+                            st.session_state.sp_sim_board = b.g
+                            st.session_state.sp_sim_used.add(sel_hand)
+                            st.session_state.sp_sim_sel = None
+
+                            # 클리어/실패 판정
+                            if len(st.session_state.sp_sim_used) == len(hand_stacks_sim):
+                                if b.all_clear():
+                                    st.success("🎉 클리어! 보드가 완전히 비워졌어요!")
+                                else:
+                                    st.error("손패를 모두 사용했지만 보드에 칩이 남아있어요.")
+                            st.rerun()
+
+            # ── 손패 표시
+            st.markdown("**손패**")
+            hand_cols = st.columns(len(hand_stacks_sim))
+            for hi, hs in enumerate(hand_stacks_sim):
+                with hand_cols[hi]:
+                    is_used = hi in used
+                    is_sel  = sel_hand == hi
+                    border  = "3px solid #6B3A2A" if is_sel else "1px solid #C4956A"
+                    opacity = "0.35" if is_used else "1.0"
+                    chip_html = ''.join(
+                        f'<span style="display:inline-block;width:16px;height:16px;border-radius:50%;'
+                        f'background:{CHIP_HEX.get(c,"#888")};margin:1px;"></span>'
+                        for c in reversed(hs)  # top이 먼저 보이도록
+                    )
+                    st.markdown(
+                        f'<div style="border:{border};border-radius:8px;padding:8px;'
+                        f'text-align:center;opacity:{opacity};background:#fff;">'
+                        f'<div style="font-size:11px;color:#7A5C45;">Stack {hi+1}</div>'
+                        f'<div style="margin:4px 0;">{chip_html}</div>'
+                        f'<div style="font-size:10px;color:#999;">{len(hs)}칩</div>'
+                        f'</div>',
+                        unsafe_allow_html=True,
+                    )
+                    if not is_used:
+                        if st.button(f"선택" if not is_sel else "선택 해제",
+                                     key=f"sp_hand_{hi}"):
+                            st.session_state.sp_sim_sel = hi if not is_sel else None
+                            st.rerun()
+
+            # ── 되돌리기
+            col_u, col_sol = st.columns(2)
+            with col_u:
+                if st.button("↩ 되돌리기", key="sp_undo"):
+                    if st.session_state.sp_sim_history:
+                        snap = st.session_state.sp_sim_history.pop()
+                        st.session_state.sp_sim_board = snap['board']
+                        st.session_state.sp_sim_used  = snap['used']
+                        st.session_state.sp_sim_sel   = snap['sel']
+                        st.rerun()
+                    else:
+                        st.info("되돌릴 동작이 없어요.")
+            with col_sol:
+                if st.button("✨ 정답 보기", key="sp_auto"):
+                    tiles = sel_r['board_json']['Tiles']
+                    sol = sel_r.get('solution')
+                    if sol:
+                        steps = []
+                        for step in sol:
+                            hi = step['hand_idx']
+                            py, px = step['pos']
+                            chips = [SP_COLOR_NAMES[c] for c in step['chips']]
+                            steps.append(f"Stack {hi+1} [{','.join(chips)}] → ({py},{px})")
+                        st.info("정답 배치 순서:\n" + "\n".join(f"{i+1}. {s}" for i,s in enumerate(steps)))
+                    else:
+                        st.warning("정답 정보가 없습니다.")
+
+    st.markdown('</div>', unsafe_allow_html=True)
