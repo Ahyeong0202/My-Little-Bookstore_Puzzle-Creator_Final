@@ -634,17 +634,15 @@ def df_to_json_bytes(df):
     return json.dumps(df.to_dict(orient='records'), ensure_ascii=False, indent=2).encode("utf-8")
 
 def hex_to_pixel(row, col, size=40):
-    # flat-top 헥사, 열(col) 기준 배치
-    # 가로: 열마다 size*1.5 간격
-    # 세로: 행마다 size*sqrt(3) 간격, 홀수 열은 size*sqrt(3)/2 아래로 offset
-    x = size * 1.5 * col
-    y = -(size * math.sqrt(3) * row + (size * math.sqrt(3) / 2) * (col % 2))
+    cw = size * 1.5
+    rh = size * math.sqrt(3)
+    x = size + col * cw + (size * 0.75 if row % 2 else 0)
+    y = size + row * rh * 0.87
     return x, y
 
 def make_hex_path(cx, cy, size=38):
-    # flat-top: 각도 0°부터 (선이 위아래, 꼭짓점 좌우)
-    pts = [(cx + size * math.cos(math.pi / 180 * (60 * i)),
-            cy + size * math.sin(math.pi / 180 * (60 * i))) for i in range(6)]
+    pts = [(cx + size * math.cos(math.pi / 180 * (60 * i - 30)),
+            cy + size * math.sin(math.pi / 180 * (60 * i - 30))) for i in range(6)]
     pts.append(pts[0])
     return [p[0] for p in pts], [p[1] for p in pts]
 
@@ -1774,6 +1772,9 @@ elif page == "🗺️ 3. 판 모양 뷰어":
                         st.rerun()
 
                 # ── 그리드 렌더링
+                max_cx, max_cy = hex_to_pixel(Y-1, X-1, hex_size)
+                fig_w = int(max_cx + hex_size + 10)
+                fig_h = int(max_cy + hex_size + 10)
                 fig = go.Figure()
                 for y in range(Y):
                     for x in range(X):
@@ -1811,13 +1812,18 @@ elif page == "🗺️ 3. 판 모양 뷰어":
                         if show_coord or edit_mode:
                             label = f"({y},{x})\n{label}"
 
-                        fig.add_annotation(x=cx,y=cy,text=label,showarrow=False,
-                            font=dict(size=9,color='white' if tt!=0 else '#333'),align='center')
+                        fig.add_annotation(
+                        x=cx, y=cy + HEX_R - 8,
+                        text=f"({y},{x})", showarrow=False,
+                        font=dict(size=9, color='#1a6fab' if (is_hover and is_target) else T['text2']),
+                        )
 
-                fig.update_layout(height=600,margin=dict(l=10,r=10,t=10,b=10),
-                    xaxis=dict(visible=False,scaleanchor='y'),
-                    yaxis=dict(visible=False),
-                    plot_bgcolor=T["grid_bg"],paper_bgcolor=T["grid_bg"],showlegend=False)
+                fig.update_layout(
+                    width=fig_w, height=fig_h,
+                    margin=dict(l=0, r=0, t=0, b=0),
+                    xaxis=dict(visible=False, range=[0, fig_w], scaleanchor='y'),
+                    yaxis=dict(visible=False, range=[fig_h, 0]),
+                    plot_bgcolor=T["grid_bg"], paper_bgcolor=T["grid_bg"], showlegend=False)
                 st.plotly_chart(fig, use_container_width=True)
 
                 # ── 저장 버튼 (편집 모드일 때만)
@@ -2002,8 +2008,12 @@ elif page == "🗺️ 3. 판 모양 뷰어":
 
         # ── 그리드 미리보기 (좌측)
         with gcol:
-            fig_e = go.Figure()
             hs = 42
+            max_cx_e, max_cy_e = hex_to_pixel(Y_e-1, X_e-1, hs)
+            fig_w_e = int(max_cx_e + hs + 10)
+            fig_h_e = int(max_cy_e + hs + 10)
+            fig_e = go.Figure()
+            
             for y in range(Y_e):
                 for x in range(X_e):
                     tile = tiles_e[y][x]
@@ -2063,14 +2073,11 @@ elif page == "🗺️ 3. 판 모양 뷰어":
                     )
 
             fig_e.update_layout(
-                height=560,
-                margin=dict(l=10, r=10, t=10, b=10),
-                xaxis=dict(visible=False, scaleanchor='y'),
-                yaxis=dict(visible=False),
-                plot_bgcolor=T["grid_bg"],
-                paper_bgcolor=T["grid_bg"],
-                showlegend=False
-            )
+                    width=fig_w_e, height=fig_h_e,
+                    margin=dict(l=0, r=0, t=0, b=0),
+                    xaxis=dict(visible=False, range=[0, fig_w_e], scaleanchor='y'),
+                    yaxis=dict(visible=False, range=[fig_h_e, 0]),
+                    plot_bgcolor=T["grid_bg"], paper_bgcolor=T["grid_bg"], showlegend=False)
             st.plotly_chart(fig_e, use_container_width=True)
 
             # ── 실시간 난이도 계산
@@ -2830,7 +2837,10 @@ elif page == "🧩 7. 묘수풀이 생성기":
                     cx, cy = _sp_hex_center(y, x)
                     hx, hy = _sp_hex_path(cx, cy, HEX_R - 1)
 
-                    is_empty = len(cell['chips']) == 0
+                    chips_data = cell.get('chips', []) if isinstance(cell, dict) else []
+                    lb_data    = cell.get('locked_below', 0) if isinstance(cell, dict) else 0
+                    is_empty = len(chips_data) == 0
+                    
                     is_hover = (y == hover_y and x == hover_x)
                     is_target = is_empty and sel_hand is not None
 
@@ -2861,12 +2871,8 @@ elif page == "🧩 7. 묘수풀이 생성기":
 
                     if is_empty:
                         sym = '●' if is_hover and is_target else '○'
-                        fig.add_annotation(
-                            x=cx, y=cy, text=sym, showarrow=False,
-                            font=dict(size=20,
-                                      color='#1a6fab' if is_hover and is_target
-                                            else (T['brown'] if is_target else T['brown_lt'])),
-                        )
+                        fig.add_annotation(x=cx, y=cy, text=label, showarrow=False,
+                            font=dict(size=9, color='white' if tt!=0 else '#333'), align='center')
                     else:
                         chips = cell['chips']
                         lb    = cell.get('locked_below', 0)
