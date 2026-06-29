@@ -325,7 +325,7 @@ DIFFICULTY_LEVELS = {  # score 필드가 label 역할
     'D12': {'empt': 5, 'n_pre': 1, 'forcing_max': 99, 'label':'D12','score': 12},
     'D34': {'empt': 3, 'n_pre': 3, 'forcing_max': 99, 'label':'D34','score': 34},
     'D48': {'empt': 2, 'n_pre': 3, 'forcing_max': 99, 'label':'D48','score': 48},
-    'D52': {'empt': 2, 'n_pre': 4, 'forcing_max': 99, 'label':'D52','score': 52},
+    'D52': {'empt': 3, 'n_pre': 3, 'forcing_max': 99, 'label':'D52','score': 52},
 }
 
 
@@ -403,20 +403,20 @@ def _attempt(pid, n_colors, cfg, rng):
     pre_pos     = positions[1:1+n_pre]
     normal_pos  = positions[1+n_pre:]
 
-    # ── prePlaced 인접 체크
-    # 1) 같은 색(c_mid) prePlaced끼리 인접 금지 (시작 즉시 병합 방지)
+    # ── prePlaced = c_mid 색으로 설정
+    pre_chips = [[c_mid] * pre_count_per for _ in range(n_pre)]
+
+    # ── prePlaced 인접 체크: 동색 인접 금지 (즉시 병합 방지)
     pre_set = set(map(tuple, pre_pos))
     for pp in pre_pos:
         for nb in get_neighbors(*pp, Y, X):
             if tuple(nb) in pre_set:
-                return None  # prePlaced 동색 인접 → 재시도
-    # 2) prePlaced는 반드시 trap 인접 칸에 1개 이상 배치 (가교 역할 보장)
+                return None  # 동색 인접 → 재시도
+
+    # ── prePlaced는 반드시 trap 인접 칸에 1개 이상 배치 (가교 역할 보장)
     trap_nb_set = set(map(tuple, get_neighbors(*trap_pos, Y, X)))
     if n_pre > 0 and not any(tuple(pp) in trap_nb_set for pp in pre_pos):
         return None  # trap 인접 prePlaced 없음 → 재시도
-
-    # ── prePlaced = c_mid 색으로 설정
-    pre_chips = [[c_mid] * pre_count_per for _ in range(n_pre)]
 
     # ── 손패 배열 (3장) — 혼색 허용
     # 각 장의 주 색 칩에 다른 색 1~2개를 섞어 혼색 손패 생성
