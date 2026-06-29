@@ -109,11 +109,8 @@ class Board:
             del chips[-MATCH_TARGET:]
 
     def place(self, y, x, stack):
-        """
-        칸에 스택을 놓고, HYBRID_02 규칙대로 연쇄 매칭을 모두 처리한다.
-        Blank(None)가 아닌 칸이면 이미 칩이 있어도 그 위에 놓을 수 있다.
-        """
-        assert self.g[y][x] is not None, f"({y},{x})는 Blank라 놓을 수 없음"
+        """빈 칸에만 스택을 놓을 수 있다. 칩이 있는 칸에는 놓을 수 없다."""
+        assert self.is_empty(y, x), f"({y},{x})는 빈 칸이 아니라 놓을 수 없음"
         self.g[y][x]['chips'].extend(stack)
         self._pop_streak_if_full((y, x))
         self._resolve_from((y, x))
@@ -182,8 +179,8 @@ class Board:
         return [(y, x) for y in range(self.Y) for x in range(self.X) if self.is_empty(y, x)]
 
     def placeable_cells(self):
-        """칩을 놓을 수 있는 모든 칸 (Blank가 아니면 이미 칩이 있어도 가능)."""
-        return [(y, x) for y in range(self.Y) for x in range(self.X) if self.g[y][x] is not None]
+        """칩을 놓을 수 있는 칸 = 완전히 빈 칸만."""
+        return self.free_cells()
 
     def all_clear(self):
         return all(
