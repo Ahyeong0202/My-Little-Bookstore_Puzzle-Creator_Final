@@ -2642,14 +2642,33 @@ elif page == "🧩 7. 묘수풀이 생성기":
             for i, pid in enumerate(range(sp_start_a, sp_end_a + 1)):
                 diff = _sp_auto_diff(pid)
                 status.text(f"S_{pid:02d} [{SP_DIFF_NAMES[diff]}] 생성 중... ({i+1}/{total})")
-                try:
-                    seed = int(sp_seed_a) if sp_seed_a > 0 else pid * 12345
-                    r = generate_special_puzzle(puzzle_id=pid, difficulty=diff, n_colors=3, seed=seed)
-                    r['pid'] = pid
-                    r['diff'] = analyze_special(r)
-                    st.session_state.sp_results.append(r)
-                except Exception as e:
-                    st.session_state.sp_results.append({'pid': pid, 'error': str(e)})
+                base_seed = int(sp_seed_a) if sp_seed_a > 0 else pid * 12345
+                r = None
+                for _retry in range(30):  # 시드 바꿔가며 최대 30번 재시도
+                    try:
+                        seed = base_seed + _retry * 7919
+                        r = generate_special_puzzle(puzzle_id=pid, difficulty=diff, n_colors=3, seed=seed)
+                        r['pid'] = pid
+                        r['diff'] = analyze_special(r)
+                        st.session_state.sp_results.append(r)
+                        break
+                    except Exception:
+                        pass
+                if r is None:
+                    # D52 실패 시 D48로 fallback
+                    for _retry in range(10):
+                        try:
+                            seed = base_seed + _retry * 3571
+                            r = generate_special_puzzle(puzzle_id=pid, difficulty='D48', n_colors=3, seed=seed)
+                            r['pid'] = pid
+                            r['diff'] = analyze_special(r)
+                            r['diff']['difficulty'] = 'D48_fallback'
+                            st.session_state.sp_results.append(r)
+                            break
+                        except Exception:
+                            pass
+                if r is None:
+                    st.session_state.sp_results.append({'pid': pid, 'error': '생성 실패'})
                 progress.progress((i+1) / total)
             status.text(f"✅ {total}개 생성 완료!")
 
@@ -2674,14 +2693,33 @@ elif page == "🧩 7. 묘수풀이 생성기":
             total = sp_end_m - sp_start_m + 1
             for i, pid in enumerate(range(sp_start_m, sp_end_m + 1)):
                 status.text(f"S_{pid:02d} [{SP_DIFF_NAMES[sp_diff_m]}] 생성 중... ({i+1}/{total})")
-                try:
-                    seed = int(sp_seed_m) if sp_seed_m > 0 else pid * 12345
-                    r = generate_special_puzzle(puzzle_id=pid, difficulty=sp_diff_m, n_colors=3, seed=seed)
-                    r['pid'] = pid
-                    r['diff'] = analyze_special(r)
-                    st.session_state.sp_results.append(r)
-                except Exception as e:
-                    st.session_state.sp_results.append({'pid': pid, 'error': str(e)})
+                base_seed = int(sp_seed_m) if sp_seed_m > 0 else pid * 12345
+                r = None
+                for _retry in range(30):
+                    try:
+                        seed = base_seed + _retry * 7919
+                        r = generate_special_puzzle(puzzle_id=pid, difficulty=sp_diff_m, n_colors=3, seed=seed)
+                        r['pid'] = pid
+                        r['diff'] = analyze_special(r)
+                        st.session_state.sp_results.append(r)
+                        break
+                    except Exception:
+                        pass
+                if r is None:
+                    # D52 실패 시 D48로 fallback
+                    for _retry in range(10):
+                        try:
+                            seed = base_seed + _retry * 3571
+                            r = generate_special_puzzle(puzzle_id=pid, difficulty='D48', n_colors=3, seed=seed)
+                            r['pid'] = pid
+                            r['diff'] = analyze_special(r)
+                            r['diff']['difficulty'] = 'D48_fallback'
+                            st.session_state.sp_results.append(r)
+                            break
+                        except Exception:
+                            pass
+                if r is None:
+                    st.session_state.sp_results.append({'pid': pid, 'error': '생성 실패'})
                 progress.progress((i+1) / total)
             status.text(f"✅ {total}개 생성 완료!")
 
