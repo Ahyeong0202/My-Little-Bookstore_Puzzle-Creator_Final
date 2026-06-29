@@ -2955,14 +2955,15 @@ elif page == "🧩 7. 묘수풀이 생성기":
 
             HEX_R = 38
             def _sp_hex_center(y, x):
-                cw = HEX_R * 1.5
-                rh = HEX_R * _math.sqrt(3)
-                return (HEX_R + x*cw + (HEX_R*0.75 if y%2 else 0),
-                        HEX_R + y*rh*0.87)
+                # flat-top 헥사곤, 열(x) 기준 시프트 — board_engine.get_neighbors와 동일 좌표계
+                cx = HEX_R * 1.5 * x
+                cy = HEX_R * _math.sqrt(3) * (y + 0.5 * (x % 2))
+                return (HEX_R + cx, HEX_R + cy)
             def _sp_hex_path(cx, cy, r):
+                # flat-top: 첫 꼭짓점이 오른쪽(0도)에서 시작 (60*i, -30 오프셋 없음)
                 xs, ys = [], []
                 for i in range(6):
-                    a = _math.pi/180*(60*i-30)
+                    a = _math.pi/180*(60*i)
                     xs.append(cx + r*_math.cos(a))
                     ys.append(cy + r*_math.sin(a))
                 xs.append(xs[0]); ys.append(ys[0])
