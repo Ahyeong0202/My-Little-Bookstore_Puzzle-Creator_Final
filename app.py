@@ -11,6 +11,7 @@ import base64
 import requests
 from datetime import datetime
 from urllib.parse import quote
+from collections import Counter
 
 st.set_page_config(page_title="Puzzle Creator", layout="wide", page_icon="🧩")
 
@@ -2530,10 +2531,10 @@ elif page == "🧩 7. 묘수풀이 생성기":
     _sys.path.insert(0, str(BASE))
     try:
         from generate_special import (
-            generate_special_puzzle, analyze_special, solve,
-            Board, get_neighbors, COLOR_MAP as SP_COLOR_MAP,
-            MATCH_TARGET,
+            generate_special_puzzle, analyze_special, difficulty_for_id,
+            DIFFICULTY_PATTERN, COLOR_MAP as SP_COLOR_MAP,
         )
+        from board_engine import Board, get_neighbors, MATCH_TARGET, make_cell
         _HAS_GEN = True
     except ImportError:
         _HAS_GEN = False
@@ -2542,7 +2543,7 @@ elif page == "🧩 7. 묘수풀이 생성기":
     st.markdown('<div class="section-header">🧩 묘수풀이(특수 퍼즐) 생성기</div>', unsafe_allow_html=True)
 
     if not _HAS_GEN:
-        st.error("generate_special.py 파일이 app.py와 같은 디렉토리에 없습니다.")
+        st.error("generate_special.py 또는 board_engine.py 파일이 app.py와 같은 디렉토리에 없습니다.")
         st.stop()
 
     CHIP_COLOR_HEX = {
@@ -2569,18 +2570,18 @@ elif page == "🧩 7. 묘수풀이 생성기":
     # ══════════════════════════════════════
     st.markdown("#### ① 생성 파라미터")
 
-    # ── 난이도 매핑
+    # ── 난이도 매핑 (1~5 정수, generate_special.py와 동일)
     SP_DIFF_NAMES = {
-        'D8':  '1. 아주 쉬움',
-        'D12': '2. 쉬움',
-        'D34': '3. 보통',
-        'D48': '4. 어려움',
-        'D52': '5. 아주 어려움',
+        1: '1. 아주 쉬움',
+        2: '2. 쉬움',
+        3: '3. 보통',
+        4: '4. 어려움',
+        5: '5. 아주 어려움',
     }
-    # 10개 단위 오르락내리락 패턴 (순환)
-    SP_AUTO_PATTERN = ['D12','D34','D12','D48','D34','D8','D34','D48','D34','D52']
+    # 15개 단위 오르락내리락 패턴 (순환) — generate_special.DIFFICULTY_PATTERN과 동일
+    SP_AUTO_PATTERN = DIFFICULTY_PATTERN
     def _sp_auto_diff(pid):
-        return SP_AUTO_PATTERN[(pid - 1) % 10]
+        return difficulty_for_id(pid)
 
     _auto_tab, _manual_tab = st.tabs(["🔀 자동 난이도 배정", "🎯 난이도 직접 선택"])
 
@@ -2595,8 +2596,8 @@ elif page == "🧩 7. 묘수풀이 생성기":
         import plotly.graph_objects as _go2
         _pids   = list(range(sp_start_a, sp_end_a + 1))
         _diffs  = [_sp_auto_diff(p) for p in _pids]
-        _scores = {'D8':1,'D12':2,'D34':3,'D48':4,'D52':5}
-        _colors_map = {'D8':'#2a78d6','D12':'#1baf7a','D34':'#eda100','D48':'#e34948','D52':'#4a3aa7'}
+        _scores = {1:1, 2:2, 3:3, 4:4, 5:5}
+        _colors_map = {1:'#2a78d6', 2:'#1baf7a', 3:'#eda100', 4:'#e34948', 5:'#4a3aa7'}
 
         # 전체 200개 배경
         _all_pids   = list(range(1, 201))
@@ -2647,7 +2648,7 @@ elif page == "🧩 7. 묘수풀이 생성기":
                 for _retry in range(30):  # 시드 바꿔가며 최대 30번 재시도
                     try:
                         seed = base_seed + _retry * 7919
-                        r = generate_special_puzzle(puzzle_id=pid, difficulty=diff, n_colors=3, seed=seed)
+                        r = generate_special_puzzle(puzzle_id=pid, difficulty=diff, seed=seed)
                         r['pid'] = pid
                         r['diff'] = analyze_special(r)
                         st.session_state.sp_results.append(r)
@@ -2655,14 +2656,15 @@ elif page == "🧩 7. 묘수풀이 생성기":
                     except Exception:
                         pass
                 if r is None:
-                    # D52 실패 시 D48로 fallback
+                    # 가장 어려운 난이도(5) 실패 시 한 단계 쉬운 난이도(4)로 fallback
+                    fallback_diff = max(1, diff - 1)
                     for _retry in range(10):
                         try:
                             seed = base_seed + _retry * 3571
-                            r = generate_special_puzzle(puzzle_id=pid, difficulty='D48', n_colors=3, seed=seed)
+                            r = generate_special_puzzle(puzzle_id=pid, difficulty=fallback_diff, seed=seed)
                             r['pid'] = pid
                             r['diff'] = analyze_special(r)
-                            r['diff']['difficulty'] = 'D48_fallback'
+                            r['diff']['difficulty_fallback'] = True
                             st.session_state.sp_results.append(r)
                             break
                         except Exception:
@@ -2682,7 +2684,7 @@ elif page == "🧩 7. 묘수풀이 생성기":
             options=list(SP_DIFF_NAMES.keys()),
             format_func=lambda d: SP_DIFF_NAMES[d],
             index=2, key="sp_diff_m",
-            help="D8: 빈칸6·가교0 / D12: 빈칸5·가교1 / D34: 빈칸3·가교3 / D48: 빈칸2·가교3 / D52: 빈칸2·가교4"
+            help="난이도 1~3: 보드+손패 색상 최대 3종 / 난이도 4~5: 색상 최대 4종 (4색을 우선 시도)"
         )
         sp_seed_m = st.number_input("시드 (0=자동)", min_value=0, value=0, key="sp_seed_m")
 
@@ -2698,7 +2700,7 @@ elif page == "🧩 7. 묘수풀이 생성기":
                 for _retry in range(30):
                     try:
                         seed = base_seed + _retry * 7919
-                        r = generate_special_puzzle(puzzle_id=pid, difficulty=sp_diff_m, n_colors=3, seed=seed)
+                        r = generate_special_puzzle(puzzle_id=pid, difficulty=sp_diff_m, seed=seed)
                         r['pid'] = pid
                         r['diff'] = analyze_special(r)
                         st.session_state.sp_results.append(r)
@@ -2706,14 +2708,15 @@ elif page == "🧩 7. 묘수풀이 생성기":
                     except Exception:
                         pass
                 if r is None:
-                    # D52 실패 시 D48로 fallback
+                    # 가장 어려운 난이도 실패 시 한 단계 쉬운 난이도로 fallback
+                    fallback_diff = max(1, sp_diff_m - 1)
                     for _retry in range(10):
                         try:
                             seed = base_seed + _retry * 3571
-                            r = generate_special_puzzle(puzzle_id=pid, difficulty='D48', n_colors=3, seed=seed)
+                            r = generate_special_puzzle(puzzle_id=pid, difficulty=fallback_diff, seed=seed)
                             r['pid'] = pid
                             r['diff'] = analyze_special(r)
-                            r['diff']['difficulty'] = 'D48_fallback'
+                            r['diff']['difficulty_fallback'] = True
                             st.session_state.sp_results.append(r)
                             break
                         except Exception:
@@ -2739,16 +2742,22 @@ elif page == "🧩 7. 묘수풀이 생성기":
                                    '오류': r['error'], '난이도': '-',
                                    '보드칩': '-', '손패칩': '-'})
             else:
-                total = r['board_chips'] + r['hand_chips']
-                ok = all(v % 10 == 0 for v in total.values())
+                hand_counts = Counter(c for h in r['hand_stacks'] for c in h)
+                total = Counter(r['board_counts']) + hand_counts
+                ok = all(v == 10 for v in total.values())
+                diff_label = SP_DIFF_NAMES.get(r['difficulty'], r['difficulty'])
+                if r['diff'].get('difficulty_fallback'):
+                    diff_label += ' (대체)'
                 rows_disp.append({
                     '번호':    f"S_{r['pid']:02d}",
                     '상태':    '✅ 성공' if ok else '⚠ 불변식오류',
-                    '난이도':  f"{SP_DIFF_NAMES.get(r['diff']['difficulty'], r['diff']['difficulty'])} ({r['diff']['diff_score']}점)",
-                    '보드칩':  str(dict(r['board_chips'])),
-                    '손패칩':  str(dict(r['hand_chips'])),
-                    'Normal':  r.get('normal_cells', '-'),
-                    'Stack':   r.get('n_stacks', '-'),
+                    '난이도':  diff_label,
+                    '색상수':  r['n_colors'],
+                    '보드칩':  str(r['board_counts']),
+                    '손패칩':  str(dict(hand_counts)),
+                    'forcing': r.get('forcing', '-'),
+                    'sol수':   r.get('n_solutions', '-'),
+                    'Stack':   len(r.get('stack_pos', [])),
                 })
         st.dataframe(pd.DataFrame(rows_disp), use_container_width=True, hide_index=True)
 
@@ -2773,7 +2782,12 @@ elif page == "🧩 7. 묘수풀이 생성기":
         # ── StackInfo / Stage 미리보기
         with st.expander("📋 StackInfo / Stage 행 미리보기"):
             si_rows = [r['stack_info'] for r in results if 'error' not in r]
-            st_rows = [r['stage_row']  for r in results if 'error' not in r]
+            st_rows = [
+                {'Id': 1000 + r['pid'], 'Mode': 'Turn', 'LevelName': f"S {r['pid']:02d}",
+                 'TurnCount': len(r['hand_stacks']), 'Extra': r['pid'],
+                 '난이도': r['difficulty'], '색상수': r['n_colors']}
+                for r in results if 'error' not in r
+            ]
             if si_rows:
                 st.markdown("**StackInfo 탭**")
                 st.dataframe(pd.DataFrame(si_rows), use_container_width=True, hide_index=True)
@@ -2818,7 +2832,7 @@ elif page == "🧩 7. 묘수풀이 생성기":
                 ws_s.insert_rows(_insert_base + added)
                 row_num = _insert_base + added
                 
-                sr = r['stage_row']
+                sr_turn_count = len(r['hand_stacks'])
                 stage_vals = []
                 for h in s_headers:
                     if h == 'Id':                        stage_vals.append(1000+pid)
@@ -2826,14 +2840,14 @@ elif page == "🧩 7. 묘수풀이 생성기":
                     elif h == 'LevelName':               stage_vals.append(f'S {pid:02d}')
                     elif h == 'PlaceableCount':          stage_vals.append(3)
                     elif h == 'IsPreview':               stage_vals.append(False)
-                    elif h == 'TotalAllocation':             stage_vals.append(sr['TurnCount'])
-                    elif h == 'InitialAvailableColors':      stage_vals.append('Blue,Red')
-                    elif h == 'DistinctColorCount':          stage_vals.append(1)
-                    elif h == 'ColorDuplicationRate':        stage_vals.append(0.7)
-                    elif h == 'ProgressAddNewColor':         stage_vals.append('10,50,80')
-                    elif h == 'NewColorsMilestones':         stage_vals.append('Yellow,White,Green')
+                    elif h == 'TotalAllocation':             stage_vals.append(sr_turn_count)
+                    elif h == 'InitialAvailableColors':      stage_vals.append(None)
+                    elif h == 'DistinctColorCount':          stage_vals.append(None)
+                    elif h == 'ColorDuplicationRate':        stage_vals.append(None)
+                    elif h == 'ProgressAddNewColor':         stage_vals.append(None)
+                    elif h == 'NewColorsMilestones':         stage_vals.append(None)
                     elif h == 'Extra':                       stage_vals.append(pid)
-                    elif h == 'TurnCount':               stage_vals.append(sr['TurnCount'])
+                    elif h == 'TurnCount':               stage_vals.append(sr_turn_count)
                     elif h in ('IceCount','GrassCount','WoodCount','CameraPictureCount'): stage_vals.append(0)
                     elif h == 'GenreXPReward':           stage_vals.append(10)
                     elif h == 'XpReward':    stage_vals.append(f'=CEILING(65+((A{row_num}-1000)^ 1.3), 5)')
@@ -2897,10 +2911,10 @@ elif page == "🧩 7. 묘수풀이 생성기":
         ok_results = [r for r in results if 'error' not in r]
         sel_label = st.selectbox(
             "시뮬레이션할 퍼즐 선택",
-            [f"S_{r['pid']:02d}  ({r['diff']['difficulty']} {r['diff']['diff_score']}점)" for r in ok_results],
+            [f"S_{r['pid']:02d}  (난이도{r['difficulty']} 색{r['n_colors']} sol={r['n_solutions']})" for r in ok_results],
             key="sp_sel_puzzle",
         )
-        sel_idx = [f"S_{r['pid']:02d}  ({r['diff']['difficulty']} {r['diff']['diff_score']}점)" for r in ok_results].index(sel_label)
+        sel_idx = [f"S_{r['pid']:02d}  (난이도{r['difficulty']} 색{r['n_colors']} sol={r['n_solutions']})" for r in ok_results].index(sel_label)
         sel_r = ok_results[sel_idx]
 
         if st.button("🔄 이 퍼즐 불러오기", key="sp_load"):
@@ -2913,12 +2927,9 @@ elif page == "🧩 7. 묘수풀이 생성기":
                 for x in range(X):
                     tt = tiles[y][x].get('TileType', 1)
                     if   tt == 1: row.append(None)
-                    elif tt == 0: row.append({'chips': [], 'locked_below': 0})
+                    elif tt == 0: row.append({'chips': []})
                     else:
-                        row.append({
-                            'chips': list(tiles[y][x].get('Stacks', [])),
-                            'locked_below': tiles[y][x].get('LockedBelow', 0)
-                        })
+                        row.append({'chips': list(tiles[y][x].get('Stacks', []))})
                 grid.append(row)
             st.session_state.sp_sim_board   = grid
             st.session_state.sp_sim_hand    = [list(s) for s in sel_r['hand_stacks']]
@@ -2999,11 +3010,11 @@ elif page == "🧩 7. 묘수풀이 생성기":
                     hx, hy = _sp_hex_path(cx, cy, HEX_R - 1)
 
                     chips_data = cell.get('chips', []) if isinstance(cell, dict) else []
-                    lb_data    = cell.get('locked_below', 0) if isinstance(cell, dict) else 0
                     is_empty = len(chips_data) == 0
-                    
+
                     is_hover = (y == hover_y and x == hover_x)
-                    is_target = is_empty and sel_hand is not None
+                    # Blank가 아니면(cell이 dict) 이미 칩이 있어도 배치 가능 (새 규칙)
+                    is_target = sel_hand is not None
 
                     # 배경색
                     if is_hover and is_target:
@@ -3040,21 +3051,16 @@ elif page == "🧩 7. 묘수풀이 생성기":
                         )
                     else:
                         chips = cell['chips']
-                        lb    = cell.get('locked_below', 0)
-                        locked_grp = _grp(chips[:lb])
-                        surf_grp   = _grp(chips[lb:])
-                        all_grp = [('L', c, n) for c,n in locked_grp] + \
-                                  [('S', c, n) for c,n in surf_grp]
+                        surf_grp = _grp(chips)
                         lh = 13
-                        total_h = len(all_grp) * lh
+                        total_h = len(surf_grp) * lh
                         base_y = cy + total_h/2 - lh*0.6
-                        for li, (typ, c, n) in enumerate(all_grp):
+                        for li, (c, n) in enumerate(surf_grp):
                             fig.add_annotation(
                                 x=cx, y=base_y - li*lh,
                                 text=f"{abbr_sp.get(c,'?')}{n}",
                                 showarrow=False,
                                 font=dict(size=11, color=chex_sp.get(c,'#888')),
-                                opacity=0.38 if typ=='L' else 1.0,
                             )
 
                     # 좌표 레이블
@@ -3068,7 +3074,7 @@ elif page == "🧩 7. 묘수풀이 생성기":
 
             # ── 칸 선택 (배치용)
             if sel_hand is not None:
-                st.markdown(f"**Stack {sel_hand+1}** 선택됨 — 배치할 빈 칸 좌표 입력:")
+                st.markdown(f"**Stack {sel_hand+1}** 선택됨 — 배치할 칸 좌표 입력 (이미 칩이 있는 칸도 가능):")
                 c1, c2, c3 = st.columns([1,1,2])
                 with c1:
                     place_y = st.number_input("행(Y)", 0, Y_b-1, 0, key="sp_py")
@@ -3084,8 +3090,6 @@ elif page == "🧩 7. 묘수풀이 생성기":
                         cell = board_grid[py][px]
                         if cell is None:
                             st.warning("Blank 칸입니다.")
-                        elif len(cell['chips']) > 0:
-                            st.warning("이미 칩이 있는 칸입니다.")
                         else:
                             # 히스토리 저장
                             import copy
@@ -3094,7 +3098,7 @@ elif page == "🧩 7. 묘수풀이 생성기":
                                 'used':  set(used),
                                 'sel':   sel_hand,
                             })
-                            # Board 객체로 배치+cascade
+                            # Board 객체로 배치+연쇄매칭(top streak 이동, 10개소멸) 처리
                             b = Board(board_grid)
                             b.place(py, px, hand_stacks_sim[sel_hand])
                             st.session_state.sp_sim_board = b.g
