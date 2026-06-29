@@ -120,26 +120,42 @@ def _assign_tops(positions, colors, Y, X, rng, max_tries=200):
     return None
 
 
-def _build_stack_from_top(top_color, colors, rng, n_chips_range=(2,7)):
+def _build_stack_from_top(top_color, colors, rng):
     """
-    top 색을 고정하고 아래쪽을 인간 스타일(연속 그룹)로 채움
-    stack[-1] = top (맨 위)
+    top 색을 고정하고 아래쪽을 인간 스타일(연속 그룹)로 채움.
+    규칙:
+      - 한 스택당 색 최대 3가지
+      - 색 1~2가지면 최대 8칩, 색 3가지면 최대 6칩
+      stack[-1] = top (맨 위)
     """
-    n_chips = rng.randint(*n_chips_range)
-    
-    # 아래쪽 그룹들 (top 제외)
+    # 이 스택에서 사용할 색 수 결정 (top 포함, 최대 3)
+    max_extra_colors = min(2, len(colors) - 1)  # top 외 추가 색
+    n_extra = rng.randint(0, max_extra_colors)   # 0=단색, 1=2색, 2=3색
+    n_stack_colors = 1 + n_extra
+
+    # 칩 수 상한: 색 1~2개면 8, 색 3개면 6
+    max_chips = 6 if n_stack_colors == 3 else 8
+
+    # top 외 사용할 색 선택
+    other_colors = [c for c in colors if c != top_color]
+    extra_colors = rng.sample(other_colors, min(n_extra, len(other_colors)))
+    stack_colors = [top_color] + extra_colors
+
+    # 아래쪽 그룹 쌓기 (top 제외)
     stack = []
-    remaining = n_chips - 1  # top 1개 예약
     prev = top_color
+    max_below = max_chips - 1  # top 1칩 예약
+    remaining = rng.randint(1, max_below)
+
     while remaining > 0:
-        avail = [c for c in colors if c != prev]
-        if not avail: avail = colors
+        avail = [c for c in stack_colors if c != prev]
+        if not avail: avail = stack_colors
         c = rng.choice(avail)
         sz = rng.randint(1, min(3, remaining))
-        stack.extend([c]*sz)
+        stack.extend([c] * sz)
         remaining -= sz
         prev = c
-    
+
     # top 추가 (맨 위)
     stack.append(top_color)
     return stack
@@ -193,28 +209,30 @@ def _attempt(pid, cfg, rng):
 
     # 4. 손패를 10의 배수 불변식 맞춰서 생성
     # 각 색: (보드 칩 수 + 손패 칩 수) = 10의 배수
-    # → 손패에 넣을 수 = (10 - board_n % 10) % 10, 혹은 +10 추가 가능
     hand_pool = []
     for c in colors:
         board_n = board_cnt.get(c, 0)
         remainder = board_n % 10
-        # 손패에 필요한 최소량: (10 - remainder) % 10
         need = (10 - remainder) % 10
-        if need == 0: need = 10  # 이미 10의 배수면 10 추가
-        # 추가 10배수 허용 (0~1배 추가)
-        extra = rng.choice([0, 10]) if need <= 8 else 0
-        add = need + extra
-        hand_pool.extend([c] * add)
+        if need == 0: need = 10  # 이미 10의 배수면 10개 필요
+        # extra 없음 — 최소한만 손패에 넣어 총량 줄임
+        hand_pool.extend([c] * need)
 
     if len(hand_pool) < 3: return None
     rng.shuffle(hand_pool)
 
-    # 3장으로 분배 (각 장 최소 1칩)
+    # 3장으로 분배 — 각 장 최대 6칩
     total_h = len(hand_pool)
     if total_h < 3: return None
+
+    # 각 장이 최대 6칩이 되도록 분배
+    max_per_hand = 6
+    if total_h > max_per_hand * 3: return None  # 18칩 초과면 불가
+
+    # 랜덤 분배 (각 장 1~6칩)
     cuts = sorted(rng.sample(range(1, total_h), 2))
     hand_stacks = [hand_pool[:cuts[0]], hand_pool[cuts[0]:cuts[1]], hand_pool[cuts[1]:]]
-    if any(len(h) == 0 for h in hand_stacks): return None
+    if any(len(h) == 0 or len(h) > max_per_hand for h in hand_stacks): return None
 
     # 5. grid 생성
     grid = [[None]*X for _ in range(Y)]
