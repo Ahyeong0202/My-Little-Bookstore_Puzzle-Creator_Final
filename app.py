@@ -3014,8 +3014,7 @@ elif page == "🧩 7. 묘수풀이 생성기":
                     is_empty = len(chips_data) == 0
 
                     is_hover = (y == hover_y and x == hover_x)
-                    # Blank가 아니면(cell이 dict) 이미 칩이 있어도 배치 가능 (새 규칙)
-                    is_target = sel_hand is not None
+                    is_target = is_empty and sel_hand is not None
 
                     # 배경색
                     if is_hover and is_target:
@@ -3075,7 +3074,7 @@ elif page == "🧩 7. 묘수풀이 생성기":
 
             # ── 칸 선택 (배치용)
             if sel_hand is not None:
-                st.markdown(f"**Stack {sel_hand+1}** 선택됨 — 배치할 칸 좌표 입력 (이미 칩이 있는 칸도 가능):")
+                st.markdown(f"**Stack {sel_hand+1}** 선택됨 — 배치할 빈 칸 좌표 입력:")
                 c1, c2, c3 = st.columns([1,1,2])
                 with c1:
                     place_y = st.number_input("행(Y)", 0, Y_b-1, 0, key="sp_py")
@@ -3091,6 +3090,8 @@ elif page == "🧩 7. 묘수풀이 생성기":
                         cell = board_grid[py][px]
                         if cell is None:
                             st.warning("Blank 칸입니다.")
+                        elif len(cell['chips']) > 0:
+                            st.warning("이미 칩이 있는 칸입니다.")
                         else:
                             # 히스토리 저장
                             import copy
