@@ -2564,43 +2564,126 @@ elif page == "🧩 7. 묘수풀이 생성기":
         if k not in st.session_state:
             st.session_state[k] = v
 
-    # ══════════════════════════════════════
+# ══════════════════════════════════════
     # 섹션 A: 생성 파라미터
     # ══════════════════════════════════════
     st.markdown("#### ① 생성 파라미터")
-    col1, col2, col3 = st.columns(3)
-    with col1:
-        sp_start = st.number_input("시작 번호", min_value=1, max_value=999, value=35)
-    with col2:
-        sp_end   = st.number_input("끝 번호",   min_value=1, max_value=999, value=37)
-    with col3:
-        sp_diff  = st.selectbox("난이도", ["D8","D12","D34","D48","D52"], index=2,
-                                  help="D8=쉬움(빈칸6) ~ D52=어려움(빈칸2+가교4)")
 
-    sp_seed = st.number_input("시드 (0=자동)", min_value=0, value=0)
+    # ── 난이도 매핑
+    SP_DIFF_NAMES = {
+        'D8':  '1. 아주 쉬움',
+        'D12': '2. 쉬움',
+        'D34': '3. 보통',
+        'D48': '4. 어려움',
+        'D52': '5. 아주 어려움',
+    }
+    # 10개 단위 오르락내리락 패턴 (순환)
+    SP_AUTO_PATTERN = ['D12','D34','D12','D48','D34','D8','D34','D48','D34','D52']
+    def _sp_auto_diff(pid):
+        return SP_AUTO_PATTERN[(pid - 1) % 10]
 
-    if st.button("🎲 특수 퍼즐 생성", type="primary", use_container_width=True):
-        st.session_state.sp_results = []
-        progress = st.progress(0)
-        status   = st.empty()
-        total = sp_end - sp_start + 1
-        for i, pid in enumerate(range(int(sp_start), int(sp_end)+1)):
-            status.text(f"S_{pid:02d} 생성 중... ({i+1}/{total})")
-            try:
-                seed = int(sp_seed) if sp_seed > 0 else pid * 12345
-                r = generate_special_puzzle(
-                    puzzle_id=pid,
-                    difficulty=sp_diff,
-                    n_colors=3,
-                    seed=seed,
-                )
-                r['pid'] = pid
-                r['diff'] = analyze_special(r)
-                st.session_state.sp_results.append(r)
-            except Exception as e:
-                st.session_state.sp_results.append({'pid': pid, 'error': str(e)})
-            progress.progress((i+1)/total)
-        status.text("완료!")
+    _auto_tab, _manual_tab = st.tabs(["🔀 자동 난이도 배정", "🎯 난이도 직접 선택"])
+
+    with _auto_tab:
+        st.caption("10개 단위 패턴으로 난이도가 오르락내리락 자동 배정됩니다.")
+
+        sp_range_a = st.slider("생성할 퍼즐 범위", 1, 200, (1, 10), key="sp_range_a")
+        sp_start_a, sp_end_a = sp_range_a
+        sp_seed_a = st.number_input("시드 (0=자동)", min_value=0, value=0, key="sp_seed_a")
+
+        # ── 난이도 곡선 미리보기
+        import plotly.graph_objects as _go2
+        _pids   = list(range(sp_start_a, sp_end_a + 1))
+        _diffs  = [_sp_auto_diff(p) for p in _pids]
+        _scores = {'D8':1,'D12':2,'D34':3,'D48':4,'D52':5}
+        _colors_map = {'D8':'#2a78d6','D12':'#1baf7a','D34':'#eda100','D48':'#e34948','D52':'#4a3aa7'}
+
+        # 전체 200개 배경
+        _all_pids   = list(range(1, 201))
+        _all_scores = [_scores[_sp_auto_diff(p)] for p in _all_pids]
+
+        _fig_sp = _go2.Figure()
+        _fig_sp.add_trace(_go2.Scatter(
+            x=_all_pids, y=_all_scores,
+            mode='lines', name='전체 패턴',
+            line=dict(color='#ccc', width=1), opacity=0.6,
+            hoverinfo='skip',
+        ))
+        _fig_sp.add_trace(_go2.Scatter(
+            x=_pids, y=[_scores[d] for d in _diffs],
+            mode='lines+markers', name=f'선택 구간 (S{sp_start_a}~S{sp_end_a})',
+            line=dict(color='#1baf7a', width=2.5),
+            marker=dict(color=[_colors_map[d] for d in _diffs], size=10,
+                        line=dict(color='white', width=1.5)),
+            hovertemplate='S%{x:02d}<br>%{text}<extra></extra>',
+            text=[SP_DIFF_NAMES[d] for d in _diffs],
+        ))
+        _fig_sp.update_layout(
+            height=260,
+            plot_bgcolor=T["plot_bg"], paper_bgcolor=T["plot_bg"],
+            font_color=T["text"],
+            xaxis=dict(title="퍼즐 번호", gridcolor=T["grid_line"], range=[0, 201]),
+            yaxis=dict(
+                title="난이도",
+                tickvals=[1,2,3,4,5],
+                ticktext=['아주 쉬움','쉬움','보통','어려움','아주 어려움'],
+                gridcolor=T["grid_line"], range=[0.5, 5.5],
+            ),
+            legend=dict(orientation="h", y=1.1, bgcolor="rgba(0,0,0,0)"),
+            margin=dict(l=10, r=10, t=30, b=10),
+        )
+        st.plotly_chart(_fig_sp, use_container_width=True)
+
+        if st.button("🎲 자동 배정으로 생성", type="primary", use_container_width=True, key="sp_gen_auto"):
+            st.session_state.sp_results = []
+            progress = st.progress(0)
+            status   = st.empty()
+            total = sp_end_a - sp_start_a + 1
+            for i, pid in enumerate(range(sp_start_a, sp_end_a + 1)):
+                diff = _sp_auto_diff(pid)
+                status.text(f"S_{pid:02d} [{SP_DIFF_NAMES[diff]}] 생성 중... ({i+1}/{total})")
+                try:
+                    seed = int(sp_seed_a) if sp_seed_a > 0 else pid * 12345
+                    r = generate_special_puzzle(puzzle_id=pid, difficulty=diff, n_colors=3, seed=seed)
+                    r['pid'] = pid
+                    r['diff'] = analyze_special(r)
+                    st.session_state.sp_results.append(r)
+                except Exception as e:
+                    st.session_state.sp_results.append({'pid': pid, 'error': str(e)})
+                progress.progress((i+1) / total)
+            status.text(f"✅ {total}개 생성 완료!")
+
+    with _manual_tab:
+        st.caption("모든 퍼즐에 동일한 난이도를 적용합니다.")
+
+        sp_range_m = st.slider("생성할 퍼즐 범위", 1, 200, (1, 10), key="sp_range_m")
+        sp_start_m, sp_end_m = sp_range_m
+        sp_diff_m  = st.selectbox(
+            "난이도",
+            options=list(SP_DIFF_NAMES.keys()),
+            format_func=lambda d: SP_DIFF_NAMES[d],
+            index=2, key="sp_diff_m",
+            help="D8: 빈칸6·가교0 / D12: 빈칸5·가교1 / D34: 빈칸3·가교3 / D48: 빈칸2·가교3 / D52: 빈칸2·가교4"
+        )
+        sp_seed_m = st.number_input("시드 (0=자동)", min_value=0, value=0, key="sp_seed_m")
+
+        if st.button("🎲 선택 난이도로 생성", type="primary", use_container_width=True, key="sp_gen_manual"):
+            st.session_state.sp_results = []
+            progress = st.progress(0)
+            status   = st.empty()
+            total = sp_end_m - sp_start_m + 1
+            for i, pid in enumerate(range(sp_start_m, sp_end_m + 1)):
+                status.text(f"S_{pid:02d} [{SP_DIFF_NAMES[sp_diff_m]}] 생성 중... ({i+1}/{total})")
+                try:
+                    seed = int(sp_seed_m) if sp_seed_m > 0 else pid * 12345
+                    r = generate_special_puzzle(puzzle_id=pid, difficulty=sp_diff_m, n_colors=3, seed=seed)
+                    r['pid'] = pid
+                    r['diff'] = analyze_special(r)
+                    st.session_state.sp_results.append(r)
+                except Exception as e:
+                    st.session_state.sp_results.append({'pid': pid, 'error': str(e)})
+                progress.progress((i+1) / total)
+            status.text(f"✅ {total}개 생성 완료!")
 
     # ══════════════════════════════════════
     # 섹션 B: 결과 목록
@@ -2623,8 +2706,7 @@ elif page == "🧩 7. 묘수풀이 생성기":
                 rows_disp.append({
                     '번호':    f"S_{r['pid']:02d}",
                     '상태':    '✅ 성공' if ok else '⚠ 불변식오류',
-                    '난이도':  f"{r['diff']['diff_score']}점 ({r['diff']['difficulty']})",
-'forcing': r['diff']['forcing'],
+                    '난이도':  f"{SP_DIFF_NAMES.get(r['diff']['difficulty'], r['diff']['difficulty'])} ({r['diff']['diff_score']}점)",
                     '보드칩':  str(dict(r['board_chips'])),
                     '손패칩':  str(dict(r['hand_chips'])),
                     'Normal':  r.get('normal_cells', '-'),
