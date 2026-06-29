@@ -233,7 +233,7 @@ def export_json_files(generated, out_dir: str):
     outp = Path(out_dir)
     outp.mkdir(parents=True, exist_ok=True)
     for g in generated:
-        fname = outp / f"S {g['pid']:02d}.json"
+        fname = outp / f"S_{g['pid']:03d}.json"
         with open(fname, 'w', encoding='utf-8') as f:
             json.dump(g['board_json'], f, ensure_ascii=False, indent=2)
     print(f'JSON {len(generated)}개 저장 완료: {outp}')
