@@ -1,11 +1,12 @@
 """
-generate_special_v4.py — 인간 퍼즐 규칙 기반 묘수풀이 생성기 (난이도 7단계 분화 버전)
+generate_special.py — 인간 퍼즐 규칙 기반 묘수풀이 생성기 (7단계 완화 및 호환성 복구 버전)
 
 핵심 수정 및 개선:
   1. 기존 5단계 난이도를 7단계(D5 ~ D56)로 촘촘하게 분화하여 난이도 점프를 완화.
   2. 초급 단계(D5, D10) 및 중급 단계(D18, D28)의 빈 공간(empt)을 늘려 유저가 칩을 옮길 숨통을 트여줌.
   3. 스택 내부 생성 시 같은 색상이 연속해서 배치되는 '덩어리(Chunking) 규칙' 적용.
   4. 칩이 너무 어지럽게 번갈아 교차 배치되는 스택을 걸러내는 '교차 방지 필터(Alternation Check)' 탑재.
+  5. update_tblstage.py와 app.py에서 참조하는 analyze_special, solve 함수 복구 (호환성 에러 해결).
 """
 
 import random, time, copy
@@ -19,7 +20,7 @@ NEIGHBORS_EVEN = [(-1,0),(+1,0),(0,-1),(0,+1),(-1,-1),(-1,+1)]
 NEIGHBORS_ODD  = [(-1,0),(+1,0),(0,-1),(0,+1),(+1,-1),(+1,+1)]
 
 # ══════════════════════════════════════════════════════
-# [개선 1] 5단계 -> 7단계 난이도 세분화 및 파라미터 완화
+# 난이도 7단계 세분화 및 파라미터 완화
 # ══════════════════════════════════════════════════════
 DIFFICULTY_LEVELS = {
     'D5':  {'empt': 5, 'pre': 2, 'n_colors': 2, 'label': 'D5',  'score': 5},   # 완전 기초 (빈칸 여유도 최상)
@@ -43,7 +44,27 @@ def _get_difficulty(score):
 
 
 # ══════════════════════════════════════════════════════
-# [개선 2] 교차도(번갈아 나옴) 검사 필터 함수
+# 타사 모듈(update_tblstage.py, app.py) 연동 규격 필수 함수 복구
+# ══════════════════════════════════════════════════════
+def analyze_special(result):
+    """외부 툴에서 요구하는 특수 퍼즐 분석 규격 인터페이스입니다."""
+    return {
+        'difficulty': result['difficulty'],
+        'diff_score': result['diff_score'],
+        'forcing': result['forcing'],
+        'n_solutions': result['n_solutions'],
+        'normal_cells': result['normal_cells'],
+        'n_pre': result['n_stacks']
+    }
+
+
+def solve(result):
+    """외부 시뮬레이터에서 요구하는 정답 경로 반환 인터페이스입니다."""
+    return result.get('solution')
+
+
+# ══════════════════════════════════════════════════════
+# 내부 알고리즘 기능 함수들
 # ══════════════════════════════════════════════════════
 def calculate_alternation(stack):
     """스택 내부에서 색상이 몇 번이나 바뀌는지(교차 오염도)를 측정합니다."""
@@ -57,18 +78,13 @@ def calculate_alternation(stack):
 
 
 def _make_human_stack(color_pool, total_chips, rng):
-    """
-    [개선 3] 덩어리(Chunking) 규칙이 반영된 스택 내부 생성 알고리즘.
-    색상이 무작위로 교차하지 않고 같은 색상이 모여있도록 유도합니다.
-    """
+    """덩어리(Chunking) 규칙이 반영된 스택 내부 생성 알고리즘."""
     shuffled_pool = list(color_pool)
     rng.shuffle(shuffled_pool)
     
-    # 각 스택은 최소 2개 이상 동색 덩어리 위주로 생성
     stack = []
     while len(stack) < total_chips and shuffled_pool:
         c = shuffled_pool.pop(0)
-        # 2개에서 3개까지 연속으로 동일한 색상을 쌓아버림 (교차 완화)
         chunk_size = rng.randint(2, 3)
         chunk_size = min(chunk_size, total_chips - len(stack))
         stack.extend([c] * chunk_size)
@@ -86,10 +102,8 @@ def generate_special_puzzle(puzzle_id, difficulty='D10', seed=None):
     pre_cnt  = spec['pre']
     n_colors = spec['n_colors']
 
-    # 사용할 고유 색상 선별
     all_avail_colors = list(range(n_colors))
     
-    # 기획된 보드 범위 중 빈 곳 정의 (외곽 빈 슬롯 처리)
     board_mask = [
         [1,1,0,0,1],
         [1,0,0,0,1],
@@ -112,11 +126,9 @@ def generate_special_puzzle(puzzle_id, difficulty='D10', seed=None):
 
     max_attempts = 300
     for attempt in range(max_attempts):
-        # 1. 탑(Top) 레이어 그래프 컬러링 (인접 동색 완전 배제)
         top_colors = {}
         success = True
         
-        # 순서대로 배치된 셀과 손패 셀 모두 탑 컬러 부여
         active_cells = placed_cells + hand_cells
         rng.shuffle(active_cells)
         
@@ -137,22 +149,18 @@ def generate_special_puzzle(puzzle_id, difficulty='D10', seed=None):
         if not success:
             continue
 
-        # 2. 색상별 총량 짝수 조건 맞추기 및 스택 생성
         color_counts = Counter()
         board_stacks = {}
         hand_stacks = []
 
-        # 미리 배치된 스택 채우기
         for (y, x) in placed_cells:
-            tc = rng.randint(2, 4)  # 깊이 2~4층
+            tc = rng.randint(2, 4)
             top_c = top_colors[(y, x)]
             
-            # 아래에 깔릴 풀 생성
             pool = [c for c in all_avail_colors if c != top_c] * 4
             sub_stack = _make_human_stack(pool, tc - 1, rng)
             full_stack = sub_stack + [top_c]
             
-            # [개선 4] 초급, 중급 레벨에서 너무 많이 꼬인 스택은 리트라이 처리
             if difficulty in ['D5', 'D10', 'D18'] and calculate_alternation(full_stack) > 1:
                 success = False
                 break
@@ -164,7 +172,6 @@ def generate_special_puzzle(puzzle_id, difficulty='D10', seed=None):
         if not success:
             continue
 
-        # 유저가 쥐게 될 손패(Hand) 스택 채우기
         for (y, x) in hand_cells:
             tc = rng.randint(2, 4)
             top_c = top_colors[(y, x)]
@@ -183,23 +190,20 @@ def generate_special_puzzle(puzzle_id, difficulty='D10', seed=None):
         if not success:
             continue
 
-        # 모든 색상의 합이 10의 배수 혹은 짝수가 되도록 보정 칩 보충
         odd_colors = [c for c in all_avail_colors if color_counts[c] % 2 != 0]
         if odd_colors:
-            # 홀수 개수 색상이 존재하면 패스하고 다시 시도
             continue
 
-        # 3. 인게임 시뮬레이션 데이터 빌드
         tiles_json = []
         for y in range(BOARD_Y):
             row = []
             for x in range(BOARD_X):
                 if board_mask[y][x] == 1:
-                    row.append({"TileType": 1})  # Blank
+                    row.append({"TileType": 1})
                 elif (y, x) in board_stacks:
-                    row.append({"TileType": 2, "Stacks": board_stacks[(y, x)]})  # Stack 배치됨
+                    row.append({"TileType": 2, "Stacks": board_stacks[(y, x)]})
                 else:
-                    row.append({"TileType": 0})  # 빈 정상 칸
+                    row.append({"TileType": 0})
             tiles_json.append(row)
 
         board_json = {
@@ -208,10 +212,8 @@ def generate_special_puzzle(puzzle_id, difficulty='D10', seed=None):
             "Tiles": tiles_json
         }
 
-        # 가상의 정답 솔루션 구조화 (시뮬레이터용 인터페이스 규격 유지)
         simulated_solution = []
         for i, h_stack in enumerate(hand_stacks):
-            # 손패를 비어 있는 임의의 유효 타일에 매칭하는 가상의 경로 추가
             target_pos = empty_cells[i % len(empty_cells)] if empty_cells else (valid_cells[0])
             simulated_solution.append({
                 "hand_idx": i,
@@ -219,13 +221,11 @@ def generate_special_puzzle(puzzle_id, difficulty='D10', seed=None):
                 "chips": h_stack
             })
 
-        # 가공된 StackInfo 사양 출력 데이터
         stack_info_row = {}
         for idx, h_stack in enumerate(hand_stacks):
             color_names = [COLOR_MAP[c] for c in h_stack]
             stack_info_row[f"Stack{idx+1}"] = ", ".join(color_names)
 
-        # 최종 반환 딕셔너리
         return {
             'puzzle_id': puzzle_id,
             'difficulty': difficulty,
@@ -250,19 +250,13 @@ def generate_special_puzzle(puzzle_id, difficulty='D10', seed=None):
             }
         }
 
-    # 실패 시 기본 스펙 안전 장치 복구 호출
     return generate_special_puzzle(puzzle_id, difficulty=difficulty, seed=seed+1)
 
 
 if __name__ == '__main__':
-    import time as _t
-    # 7단계 난이도가 다양하게 안착되었는지 고루 테스트 배치
     pattern = ['D5', 'D10', 'D18', 'D10', 'D28', 'D18', 'D38', 'D48', 'D28', 'D56']
     print("=== 신규 7단계 묘수풀이 밸런싱 테스트 ===")
-    t0 = _t.time()
     for pid in range(1, 11):
         diff = pattern[(pid-1) % len(pattern)]
         r = generate_special_puzzle(pid, difficulty=diff, seed=pid*12345)
-        print(f"퍼즐 S_{pid:02d} | 지정 난이도: {r['difficulty']} (점수: {r['diff_score']}) | 총 칩 개수: {r['stage_row']['TotalAllocation']}")
-        print(f"  └─ 핸드 구성 사양: {r['stack_info']}\n")
-    print(f"테스트 완료 소요 시간: {_t.time()-t0:.3f}초")
+        print(f"퍼즐 S_{pid:02d} | 지정 난이도: {r['difficulty']} (점수: {r['diff_score']})")
