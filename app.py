@@ -2675,13 +2675,23 @@ elif page == "🧩 7. 묘수풀이 생성기":
             exist_ids = {row[0] for row in ws_s.iter_rows(min_row=2, values_only=True) if row[0]}
             exist_si  = {row[0] for row in ws_si.iter_rows(min_row=2, values_only=True) if row[0]}
 
+            # Turn 마지막 행 위치 찾기 (Normal 시작 전)
+            _last_turn_row = 1
+            for _rn, _row in enumerate(ws_s.iter_rows(min_row=2, values_only=True), start=2):
+                if _row[1] == 'Turn':
+                    _last_turn_row = _rn
+            _insert_base = _last_turn_row + 1  # 여기부터 삽입
+
             added = 0
             for r in results:
                 if 'error' in r: continue
                 pid = r['pid']
                 if (1000+pid) in exist_ids or pid in exist_si: continue
 
-                row_num = ws_s.max_row + 1
+                # Turn 묶음 끝에 삽입 (Normal 앞)
+                ws_s.insert_rows(_insert_base + added)
+                row_num = _insert_base + added
+                
                 sr = r['stage_row']
                 stage_vals = []
                 for h in s_headers:
@@ -2690,8 +2700,13 @@ elif page == "🧩 7. 묘수풀이 생성기":
                     elif h == 'LevelName':               stage_vals.append(f'S {pid:02d}')
                     elif h == 'PlaceableCount':          stage_vals.append(3)
                     elif h == 'IsPreview':               stage_vals.append(False)
-                    elif h == 'TotalAllocation':         stage_vals.append(sr['TurnCount'])
-                    elif h == 'Extra':                   stage_vals.append(pid)
+                    elif h == 'TotalAllocation':             stage_vals.append(sr['TurnCount'])
+                    elif h == 'InitialAvailableColors':      stage_vals.append('Blue,Red')
+                    elif h == 'DistinctColorCount':          stage_vals.append(1)
+                    elif h == 'ColorDuplicationRate':        stage_vals.append(0.7)
+                    elif h == 'ProgressAddNewColor':         stage_vals.append('10,50,80')
+                    elif h == 'NewColorsMilestones':         stage_vals.append('Yellow,White,Green')
+                    elif h == 'Extra':                       stage_vals.append(pid)
                     elif h == 'TurnCount':               stage_vals.append(sr['TurnCount'])
                     elif h in ('IceCount','GrassCount','WoodCount','CameraPictureCount'): stage_vals.append(0)
                     elif h == 'GenreXPReward':           stage_vals.append(10)
@@ -2700,7 +2715,29 @@ elif page == "🧩 7. 묘수풀이 생성기":
                     elif h == 'TokenReward': stage_vals.append(f'=CEILING(10+((A{row_num}-1000)^ 1.5), 5)')
                     elif h == 'GemReward':   stage_vals.append(f'=CEILING(5+((A{row_num}-1000)^ 1.45), 5)')
                     else:                                stage_vals.append(None)
-                ws_s.append(stage_vals)
+                for _ci, _val in enumerate(stage_vals, start=1):
+                    ws_s.cell(row_num, _ci).value = _val
+
+                # ── 스타일 적용 (삽입된 행 기준)
+                from openpyxl.styles import PatternFill, Font, Alignment
+                _turn_fill = PatternFill('solid', fgColor='DAF2D0')
+                _center = Alignment(horizontal='center', vertical='center')
+
+                for _col in range(1, len(s_headers) + 1):
+                    _cell = ws_s.cell(row_num, _col)
+                    # 전체 가운데 정렬
+                    _cell.alignment = _center
+                    # B열(Mode) Turn 색칠
+                    if _col == 2:
+                        _cell.fill = _turn_fill
+                    # B열(Mode), D열(PlaceableCount) Bold
+                    if _col in (2, 4):
+                        _f = _cell.font
+                        _cell.font = Font(
+                            name=_f.name, size=_f.size, color=_f.color,
+                            italic=_f.italic, underline=_f.underline,
+                            strike=_f.strike, bold=True
+                        )
 
                 si_vals = []
                 si_data = r['stack_info']
