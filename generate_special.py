@@ -191,16 +191,19 @@ def _attempt(pid, cfg, rng):
     # 3. 보드 색별 칩 수 파악
     board_cnt = Counter(c for chips in pre_chips for c in chips)
 
-    # 4. 손패를 짝수 조건 맞춰서 생성
-    # 각 색의 보드 칩 수가 홀수면 손패에서 홀수개 추가 → 전체 짝수
-    # 짝수면 손패에서 짝수개 추가
+    # 4. 손패를 10의 배수 불변식 맞춰서 생성
+    # 각 색: (보드 칩 수 + 손패 칩 수) = 10의 배수
+    # → 손패에 넣을 수 = (10 - board_n % 10) % 10, 혹은 +10 추가 가능
     hand_pool = []
     for c in colors:
         board_n = board_cnt.get(c, 0)
-        # 추가할 양: 1~4개, 단 전체 합이 짝수되도록
-        add = rng.randint(1, 4)
-        if (board_n + add) % 2 != 0:
-            add += 1  # 홀수면 1 더해서 짝수로
+        remainder = board_n % 10
+        # 손패에 필요한 최소량: (10 - remainder) % 10
+        need = (10 - remainder) % 10
+        if need == 0: need = 10  # 이미 10의 배수면 10 추가
+        # 추가 10배수 허용 (0~1배 추가)
+        extra = rng.choice([0, 10]) if need <= 8 else 0
+        add = need + extra
         hand_pool.extend([c] * add)
 
     if len(hand_pool) < 3: return None
