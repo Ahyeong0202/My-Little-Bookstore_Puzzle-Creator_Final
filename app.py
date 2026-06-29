@@ -2727,7 +2727,7 @@ elif page == "🧩 7. 묘수풀이 생성기":
         st.download_button(
             "📥 보드 JSON ZIP 다운로드",
             zip_buf.getvalue(),
-            f"special_puzzles_S{int(sp_start):02d}-S{int(sp_end):02d}.zip",
+            f"special_puzzles_S{results[0]['pid']:02d}-S{results[-1]['pid']:02d}.zip",
             "application/zip",
             use_container_width=True,
         )
@@ -2764,11 +2764,17 @@ elif page == "🧩 7. 묘수풀이 생성기":
                     _last_turn_row = _rn
             _insert_base = _last_turn_row + 1  # 여기부터 삽입
 
+            # 성공한 것만, Id 순 정렬
+            _to_add = sorted(
+                [r for r in results if 'error' not in r
+                 and (1000 + r['pid']) not in exist_ids
+                 and r['pid'] not in exist_si],
+                key=lambda r: r['pid']
+            )
+
             added = 0
-            for r in results:
-                if 'error' in r: continue
+            for r in _to_add:
                 pid = r['pid']
-                if (1000+pid) in exist_ids or pid in exist_si: continue
 
                 # Turn 묶음 끝에 삽입 (Normal 앞)
                 ws_s.insert_rows(_insert_base + added)
